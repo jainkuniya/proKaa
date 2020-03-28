@@ -7,6 +7,7 @@ import styles from './Home.css';
 type State = {
   message: string;
   host: string;
+  topic: string;
 };
 
 type Props = {};
@@ -16,11 +17,12 @@ export default class Home extends PureComponent<Props, State> {
     super(props);
     this.state = {
       message: '',
-      host: ''
+      host: '',
+      topic: ''
     };
   }
 
-  onChange = (message: string) => {
+  handleMessageChange = (message: string) => {
     this.setState({
       message
     });
@@ -32,19 +34,21 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
+  handleTopicChange = (host: { target: { value: string } }) => {
+    this.setState({
+      topic: host.target.value
+    });
+  };
+
   sendMessage = () => {
-    console.log('Fdasfsad');
-    const { KeyedMessage, Producer } = kafka;
-    const client = new kafka.KafkaClient();
+    const { host, message, topic } = this.state;
+    const { Producer } = kafka;
+    const client = new kafka.KafkaClient({ kafkaHost: host });
     const producer = new Producer(client);
-    const km = new KeyedMessage('key', 'message');
-    const payloads = [
-      { topic: 'topic1', messages: 'hi', partition: 0 },
-      { topic: 'topic2', messages: ['hello', 'world', km] }
-    ];
+    const payloads = [{ topic, messages: message }];
     producer.on('ready', () => {
       producer.send(payloads, (err, data) => {
-        console.log(data);
+        console.log(err, data);
       });
     });
 
@@ -53,28 +57,38 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
-  onLoad = () => {};
-
   render() {
-    const { host, message } = this.state;
+    const { host, message, topic } = this.state;
     return (
       <div className={styles.container} data-tid="container">
-        <input
-          value={host}
-          className={styles.addressBar}
-          placeholder="kafkaHost:9092"
-          onChange={e => {
-            this.handleHostChange(e);
-          }}
-        />
-        <hr />
+        <span className={styles.inputRow}>
+          <span className={styles.label}>Kafka Host:</span>
+          <input
+            value={host}
+            className={styles.input}
+            placeholder="localhost:9092"
+            onChange={e => {
+              this.handleHostChange(e);
+            }}
+          />
+        </span>
+        <span className={styles.inputRow}>
+          <span className={styles.label}>Topic:</span>
+          <input
+            value={topic}
+            className={styles.input}
+            placeholder="topic"
+            onChange={e => {
+              this.handleTopicChange(e);
+            }}
+          />
+        </span>
         <AceEditor
           placeholder="Placeholder Text"
           mode="javascript"
           theme="monokai"
           name="blah2"
-          onLoad={this.onLoad}
-          onChange={this.onChange}
+          onChange={this.handleMessageChange}
           fontSize={14}
           showPrintMargin
           showGutter
@@ -89,7 +103,11 @@ export default class Home extends PureComponent<Props, State> {
           }}
         />
 
-        <button type="button" onClick={this.sendMessage}>
+        <button
+          className={styles.pushButton}
+          type="button"
+          onClick={this.sendMessage}
+        >
           Push
         </button>
       </div>

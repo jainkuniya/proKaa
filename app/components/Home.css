@@ -1,14 +1,39 @@
-.container {
-  flex: 1;
-  padding: 16px;
+.inputRow {
+  display: flex;
+  flex-direction: row;
+  margin: 8px;
 }
 
-.addressBar {
+.label {
+  padding: 8px;
+  background-color: black;
+  color: white;
+  flex: 2;
+}
+
+.container {
+  display: flex;
+  flex: 1;
+  padding: 16px;
+  flex-direction: column;
+}
+
+.input {
   padding: 4px;
   font-size: 16px;
   width: 100%;
+  flex: 8;
 }
 
 .messageEditor {
-  width: 100%;
+  flex: 1;
+}
+
+.pushButton {
+  flex: 1;
+  font-size: 20px;
+  background-color: black;
+  color: white;
+  padding: 8px;
+  margin: 16px 0 16px 0;
 }
