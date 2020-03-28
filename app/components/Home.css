@@ -1,14 +1,14 @@
 .container {
-  position: absolute;
-  top: 30%;
-  left: 10px;
-  text-align: center;
+  flex: 1;
+  padding: 16px;
 }
 
-.container h2 {
-  font-size: 5rem;
+.addressBar {
+  padding: 4px;
+  font-size: 16px;
+  width: 100%;
 }
 
-.container a {
-  font-size: 1.4rem;
+.messageEditor {
+  width: 100%;
 }
