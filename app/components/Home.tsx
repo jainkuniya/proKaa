@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import AceEditor from 'react-ace';
 import kafka from 'kafka-node';
+import { remote } from 'electron';
 
 import styles from './Home.css';
 
@@ -57,6 +58,14 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
+  loadProtoFile = async () => {
+    const { dialog } = remote;
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile']
+    });
+    console.log(result.filePaths[0]);
+  };
+
   render() {
     const { host, message, topic } = this.state;
     return (
@@ -83,8 +92,15 @@ export default class Home extends PureComponent<Props, State> {
             }}
           />
         </span>
+        <button
+          className={styles.pushButton}
+          type="button"
+          onClick={this.loadProtoFile}
+        >
+          Load proto file
+        </button>
         <AceEditor
-          placeholder="Placeholder Text"
+          placeholder="message"
           mode="javascript"
           theme="monokai"
           name="blah2"
