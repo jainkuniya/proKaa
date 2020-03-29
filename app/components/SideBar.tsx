@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import Switch from 'react-switch';
 import { remote } from 'electron';
 
 import styles from './SideBar.css';
@@ -9,6 +10,8 @@ type State = {
 };
 
 type Props = {
+  isProtoEnabled: boolean;
+  handleProtoEnableToggle: (enabled: boolean) => void;
   onMessageItemSelect: (msg: {
     name: string;
     fields: Record<string, any>;
@@ -38,14 +41,26 @@ export default class SideBar extends PureComponent<Props, State> {
 
   render() {
     const { protos } = this.state;
-    const { onMessageItemSelect } = this.props;
+    const {
+      onMessageItemSelect,
+      handleProtoEnableToggle,
+      isProtoEnabled
+    } = this.props;
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <span>Protos</span>
-          <button type="button" onClick={this.loadProtoFile}>
-            +
-          </button>
+          <div>
+            <Switch
+              onChange={handleProtoEnableToggle}
+              checked={isProtoEnabled}
+            />
+            {isProtoEnabled && (
+              <button type="button" onClick={this.loadProtoFile}>
+                +
+              </button>
+            )}
+          </div>
         </div>
         <div className={styles.list}>
           {protos.map(proto => (

@@ -18,6 +18,10 @@
     "bloomrpc-mock": "^0.3.1",
     "kafka-node": "^5.0.0",
     "react-json-view": "^1.19.1",
+    "react-switch": "^5.0.1",
     "uuid": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/uuid": "^7.0.2"
   }
 }

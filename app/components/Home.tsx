@@ -8,6 +8,7 @@ import styles from './Home.css';
 import SideBar from './SideBar';
 
 type State = {
+  isProtoEnabled: false;
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
@@ -27,6 +28,12 @@ export default class Home extends PureComponent<Props, State> {
       topic: 'topic123'
     };
   }
+
+  handleProtoEnableToggle = (enabled: booleans) => {
+    this.setState({
+      isProtoEnabled: enabled
+    });
+  };
 
   handleMessageChange = (event: { target: { value: string } }) => {
     this.setState({
@@ -158,11 +165,15 @@ export default class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { host, message, topic } = this.state;
+    const { host, message, topic, isProtoEnabled } = this.state;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
-          <SideBar onMessageItemSelect={this.onMessageItemSelect} />
+          <SideBar
+            handleProtoEnableToggle={this.handleProtoEnableToggle}
+            onMessageItemSelect={this.onMessageItemSelect}
+            isProtoEnabled={isProtoEnabled}
+          />
         </div>
         <div className={styles.rightPanel}>
           <span className={styles.inputRow}>
