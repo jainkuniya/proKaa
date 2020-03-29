@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import ReactJson from 'react-json-view';
 import kafka from 'kafka-node';
 import Protobuf from 'protobufjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
@@ -94,7 +95,7 @@ export default class Home extends PureComponent<Props, State> {
         const fieldNameLower = fieldName.toLowerCase();
 
         if (fieldNameLower.startsWith('id') || fieldNameLower.endsWith('id')) {
-          return 'uuid';
+          return uuidv4();
         }
 
         return 'Hello';
