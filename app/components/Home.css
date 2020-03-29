@@ -15,7 +15,18 @@
   display: flex;
   flex: 1;
   padding: 16px;
+  flex-direction: row;
+}
+
+.sideBar {
+  display: flex;
+  flex: 2;
+}
+
+.rightPanel {
+  display: flex;
   flex-direction: column;
+  flex: 8;
 }
 
 .input {

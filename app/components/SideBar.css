@@ -1,0 +1,23 @@
+.wrapper {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  margin: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  background-color: black;
+  color: white;
+  padding: 16px;
+}
+
+.list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}

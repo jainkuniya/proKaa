@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import AceEditor from 'react-ace';
 import kafka from 'kafka-node';
-import { remote } from 'electron';
 
 import styles from './Home.css';
+import SideBar from './SideBar';
 
 type State = {
   message: string;
@@ -58,74 +58,64 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
-  loadProtoFile = async () => {
-    const { dialog } = remote;
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile']
-    });
-    console.log(result.filePaths[0]);
-  };
-
   render() {
     const { host, message, topic } = this.state;
     return (
       <div className={styles.container} data-tid="container">
-        <span className={styles.inputRow}>
-          <span className={styles.label}>Kafka Host:</span>
-          <input
-            value={host}
-            className={styles.input}
-            placeholder="localhost:9092"
-            onChange={e => {
-              this.handleHostChange(e);
+        <div className={styles.sideBar}>
+          <SideBar />
+        </div>
+        <div className={styles.rightPanel}>
+          <span className={styles.inputRow}>
+            <span className={styles.label}>Kafka Host:</span>
+            <input
+              value={host}
+              className={styles.input}
+              placeholder="localhost:9092"
+              onChange={e => {
+                this.handleHostChange(e);
+              }}
+            />
+          </span>
+          <span className={styles.inputRow}>
+            <span className={styles.label}>Topic:</span>
+            <input
+              value={topic}
+              className={styles.input}
+              placeholder="topic"
+              onChange={e => {
+                this.handleTopicChange(e);
+              }}
+            />
+          </span>
+          <AceEditor
+            placeholder="message"
+            mode="javascript"
+            theme="monokai"
+            name="blah2"
+            onChange={this.handleMessageChange}
+            fontSize={14}
+            showPrintMargin
+            showGutter
+            highlightActiveLine
+            value={message}
+            setOptions={{
+              enableBasicAutocompletion: false,
+              enableLiveAutocompletion: false,
+              enableSnippets: false,
+              showLineNumbers: true,
+              tabSize: 2
             }}
           />
-        </span>
-        <span className={styles.inputRow}>
-          <span className={styles.label}>Topic:</span>
-          <input
-            value={topic}
-            className={styles.input}
-            placeholder="topic"
-            onChange={e => {
-              this.handleTopicChange(e);
-            }}
-          />
-        </span>
-        <button
-          className={styles.pushButton}
-          type="button"
-          onClick={this.loadProtoFile}
-        >
-          Load proto file
-        </button>
-        <AceEditor
-          placeholder="message"
-          mode="javascript"
-          theme="monokai"
-          name="blah2"
-          onChange={this.handleMessageChange}
-          fontSize={14}
-          showPrintMargin
-          showGutter
-          highlightActiveLine
-          value={message}
-          setOptions={{
-            enableBasicAutocompletion: false,
-            enableLiveAutocompletion: false,
-            enableSnippets: false,
-            showLineNumbers: true,
-            tabSize: 2
-          }}
-        />
 
-        <button
-          className={styles.pushButton}
-          type="button"
-          onClick={this.sendMessage}
-        >
-          Push
-        </button>
+          <button
+            className={styles.pushButton}
+            type="button"
+            onClick={this.sendMessage}
+          >
+            Push
+          </button>
+        </div>
       </div>
     );
   }
