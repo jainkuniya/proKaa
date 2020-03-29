@@ -199,23 +199,25 @@ export default class Home extends PureComponent<Props, State> {
               }}
             />
           </span>
-          {typeof message.content === 'string' ? (
-            <input
-              className={styles.messageInput}
-              value={message.content}
-              onChange={this.handleMessageChange}
-            />
-          ) : (
-            <ReactJson
-              theme="summerfruit:inverted"
-              name={false}
-              displayDataTypes={false}
-              displayObjectSize={false}
-              enableClipboard={false}
-              src={{ ...message.content }}
-              onEdit={this.onMessageEdit}
-            />
-          )}
+          <div className={styles.messageContainer}>
+            {typeof message.content === 'string' ? (
+              <textarea
+                className={styles.messageInput}
+                value={message.content}
+                onChange={this.handleMessageChange}
+              />
+            ) : (
+              <ReactJson
+                theme="summerfruit:inverted"
+                name={false}
+                displayDataTypes={false}
+                displayObjectSize={false}
+                enableClipboard={false}
+                src={{ ...message.content }}
+                onEdit={this.onMessageEdit}
+              />
+            )}
+          </div>
 
           <button
             className={styles.pushButton}
