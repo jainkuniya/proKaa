@@ -81,8 +81,8 @@ export default class Proto extends PureComponent<Props, State> {
     const { onMessageItemSelect, path } = this.props;
     return items.map(item => {
       return (
-        <div key={item}>
-          <span>{item.name}</span>
+        <div className={styles.wrapper} key={item}>
+          <span className={styles.packageName}>{item.name}</span>
           <ul>
             {item.messages.map(msg => (
               <li key={msg.name}>
