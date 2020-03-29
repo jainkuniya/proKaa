@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
+import content from './css';
 
 type State = {
   isProtoEnabled: false;
@@ -198,8 +199,9 @@ export default class Home extends PureComponent<Props, State> {
               }}
             />
           </span>
-          {message.type === 'string' ? (
+          {typeof message.content === 'string' ? (
             <input
+              className={styles.messageInput}
               value={message.content}
               onChange={this.handleMessageChange}
             />

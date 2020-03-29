@@ -33,10 +33,10 @@
   padding: 4px;
   font-size: 16px;
   width: 100%;
-  flex: 8;
+  flex: 28;
 }
 
-.messageEditor {
+.messageInput {
   flex: 1;
 }
 
