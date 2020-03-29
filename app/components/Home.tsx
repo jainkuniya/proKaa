@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import AceEditor from 'react-ace';
+import ReactJson from 'react-json-view';
 import kafka from 'kafka-node';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
 
 type State = {
-  message: string;
+  message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
 };
@@ -17,15 +17,21 @@ export default class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      message: '',
+      message: { type: 'string', content: '' },
       host: '',
       topic: ''
     };
   }
 
-  handleMessageChange = (message: string) => {
+  handleMessageChange = (event: { target: { value: string } }) => {
     this.setState({
-      message
+      message: { type: 'string', content: event.target.value }
+    });
+  };
+
+  onMessageEdit = edit => {
+    this.setState({
+      message: { type: 'object', content: edit.updated_src }
     });
   };
 
@@ -117,7 +123,7 @@ export default class Home extends PureComponent<Props, State> {
       );
     });
     this.setState({
-      message: JSON.stringify(obj)
+      message: { type: 'object', content: obj }
     });
   };
 
@@ -151,25 +157,22 @@ export default class Home extends PureComponent<Props, State> {
               }}
             />
           </span>
-          <AceEditor
-            placeholder="message"
-            mode="javascript"
-            theme="monokai"
-            name="blah2"
-            onChange={this.handleMessageChange}
-            fontSize={14}
-            showPrintMargin
-            showGutter
-            highlightActiveLine
-            value={message}
-            setOptions={{
-              enableBasicAutocompletion: false,
-              enableLiveAutocompletion: false,
-              enableSnippets: false,
-              showLineNumbers: true,
-              tabSize: 2
-            }}
-          />
+          {message.type === 'string' ? (
+            <input
+              value={message.content}
+              onChange={this.handleMessageChange}
+            />
+          ) : (
+            <ReactJson
+              theme="summerfruit:inverted"
+              name={false}
+              displayDataTypes={false}
+              displayObjectSize={false}
+              enableClipboard={false}
+              src={{ ...message.content }}
+              onEdit={this.onMessageEdit}
+            />
+          )}
 
           <button
             className={styles.pushButton}
