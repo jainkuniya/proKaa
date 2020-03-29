@@ -6,10 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
-import content from './css';
 
 type State = {
-  isProtoEnabled: false;
+  isProtoEnabled: boolean;
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
@@ -24,13 +23,14 @@ export default class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      isProtoEnabled: false,
       message: { type: 'string', content: '' },
       host: 'localhost:9092',
       topic: 'topic123'
     };
   }
 
-  handleProtoEnableToggle = (enabled: booleans) => {
+  handleProtoEnableToggle = (enabled: boolean) => {
     this.setState({
       isProtoEnabled: enabled
     });

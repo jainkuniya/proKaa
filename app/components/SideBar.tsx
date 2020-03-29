@@ -49,20 +49,24 @@ export default class SideBar extends PureComponent<Props, State> {
     });
   };
 
+  handleProtoEnableToggle = (checked: boolean) => {
+    if (!checked) {
+      this.setState({ protos: [] });
+    }
+    const { handleProtoEnableToggle } = this.props;
+    handleProtoEnableToggle(checked);
+  };
+
   render() {
     const { protos } = this.state;
-    const {
-      onMessageItemSelect,
-      handleProtoEnableToggle,
-      isProtoEnabled
-    } = this.props;
+    const { onMessageItemSelect, isProtoEnabled } = this.props;
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <span>Protos Messages</span>
           <div className={styles.headerRightPanel}>
             <Switch
-              onChange={handleProtoEnableToggle}
+              onChange={this.handleProtoEnableToggle}
               checked={isProtoEnabled}
             />
           </div>
