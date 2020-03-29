@@ -12,6 +12,8 @@ type Props = {
   onMessageItemSelect: (msg: {
     name: string;
     fields: Record<string, any>;
+    proto: string;
+    packageName: string;
   }) => void;
 };
 

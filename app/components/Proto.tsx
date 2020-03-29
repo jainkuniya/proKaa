@@ -17,6 +17,8 @@ type Props = {
   onMessageItemSelect: (msg: {
     name: string;
     fields: Record<string, any>;
+    proto: string;
+    packageName: string;
   }) => void;
 };
 
@@ -76,7 +78,7 @@ export default class Proto extends PureComponent<Props, State> {
 
   render() {
     const { items } = this.state;
-    const { onMessageItemSelect } = this.props;
+    const { onMessageItemSelect, path } = this.props;
     return items.map(item => {
       return (
         <div key={item}>
@@ -84,7 +86,18 @@ export default class Proto extends PureComponent<Props, State> {
           <ul>
             {item.messages.map(msg => (
               <li key={msg.name}>
-                <button type="button" onClick={() => onMessageItemSelect(msg)}>
+                <button
+                  type="button"
+                  onClick={
+                    () =>
+                      onMessageItemSelect({
+                        ...msg,
+                        proto: path,
+                        packageName: item.name
+                      })
+                    // eslint-disable-next-line react/jsx-curly-newline
+                  }
+                >
                   {msg.name}
                 </button>
               </li>

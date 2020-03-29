@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import ReactJson from 'react-json-view';
 import kafka from 'kafka-node';
+import Protobuf from 'protobufjs';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
@@ -9,6 +10,9 @@ type State = {
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
+  proto?: string;
+  packageName?: string;
+  messageName?: string;
 };
 
 type Props = {};
@@ -18,8 +22,8 @@ export default class Home extends PureComponent<Props, State> {
     super(props);
     this.state = {
       message: { type: 'string', content: '' },
-      host: '',
-      topic: ''
+      host: 'localhost:9092',
+      topic: 'topic123'
     };
   }
 
@@ -47,12 +51,32 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
-  sendMessage = () => {
-    const { host, message, topic } = this.state;
+  sendMessage = async () => {
+    const {
+      host,
+      message,
+      messageName,
+      topic,
+      proto,
+      packageName
+    } = this.state;
     const { Producer } = kafka;
     const client = new kafka.KafkaClient({ kafkaHost: host });
     const producer = new Producer(client);
-    const payloads = [{ topic, messages: message }];
+    let payloads;
+    if (message.type === 'string') {
+      payloads = [{ topic, messages: message }];
+    } else {
+      const root: Record<string, any> = await Protobuf.load(proto);
+      console.log(`${packageName}.${messageName}`);
+      const protoMessage = root.lookupType(`${packageName}.${messageName}`);
+      const errMsg = protoMessage.verify(message.content);
+      if (errMsg) console.log(errMsg);
+      const msg = protoMessage.create(message.content);
+      const buffer = protoMessage.encode(msg).finish();
+      payloads = [{ topic, messages: buffer }];
+    }
+
     producer.on('ready', () => {
       producer.send(payloads, (err, data) => {
         console.log(err, data);
@@ -113,6 +137,8 @@ export default class Home extends PureComponent<Props, State> {
   onMessageItemSelect = (msg: {
     name: string;
     fields: Record<string, any>;
+    proto: string;
+    packageName: string;
   }) => {
     console.log(msg);
     const obj = {};
@@ -123,7 +149,10 @@ export default class Home extends PureComponent<Props, State> {
       );
     });
     this.setState({
-      message: { type: 'object', content: obj }
+      message: { type: 'object', content: obj },
+      messageName: msg.name,
+      proto: msg.proto,
+      packageName: msg.packageName
     });
   };
 
