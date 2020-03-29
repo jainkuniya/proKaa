@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import ReactJson from 'react-json-view';
+import ClipLoader from 'react-spinners/ClipLoader';
 import kafka from 'kafka-node';
 import Protobuf from 'protobufjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +13,7 @@ type State = {
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
+  loading: boolean;
   proto?: string;
   packageName?: string;
   messageName?: string;
@@ -26,7 +28,8 @@ export default class Home extends PureComponent<Props, State> {
       isProtoEnabled: false,
       message: { type: 'string', content: '' },
       host: 'localhost:9092',
-      topic: 'topic123'
+      topic: 'topic123',
+      loading: false
     };
   }
 
@@ -85,15 +88,23 @@ export default class Home extends PureComponent<Props, State> {
       const buffer = protoMessage.encode(msg).finish();
       payloads = [{ topic, messages: buffer }];
     }
-
+    this.setState({
+      loading: true
+    });
     producer.on('ready', () => {
       producer.send(payloads, (err, data) => {
+        this.setState({
+          loading: false
+        });
         console.log(err, data);
       });
     });
 
     producer.on('error', err => {
       console.log(err);
+      this.setState({
+        loading: false
+      });
     });
   };
 
@@ -166,7 +177,7 @@ export default class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { host, message, topic, isProtoEnabled } = this.state;
+    const { host, message, topic, isProtoEnabled, loading } = this.state;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
@@ -223,8 +234,10 @@ export default class Home extends PureComponent<Props, State> {
             className={styles.pushButton}
             type="button"
             onClick={this.sendMessage}
+            disabled={loading}
           >
-            Push
+            {!loading && <span>Push</span>}
+            <ClipLoader size={20} color="#ffffff" loading={loading} />
           </button>
         </div>
       </div>

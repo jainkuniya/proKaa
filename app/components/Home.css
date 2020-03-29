@@ -53,4 +53,7 @@
   color: white;
   padding: 8px;
   margin: 16px 0 16px 0;
+  align-items: center;
+  display: flex;
+  justify-content: center;
 }
