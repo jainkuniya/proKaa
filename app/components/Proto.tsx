@@ -5,7 +5,7 @@ import styles, { message } from './Proto.css';
 
 type Item = {
   name: string;
-  messages: string[];
+  messages: { name: string; fields: any };
 };
 
 type State = {
@@ -45,7 +45,12 @@ export default class Proto extends PureComponent<Props, State> {
         const messages = Object.keys(tree.nested);
         this.setItems(
           packageName,
-          messages.filter(msgName => tree.nested[msgName].fields)
+          messages
+            .filter(msgName => tree.nested[msgName].fields)
+            .map(msgName => ({
+              name: msgName,
+              fields: tree.nested[msgName].fields
+            }))
         );
         break;
       }
@@ -63,8 +68,6 @@ export default class Proto extends PureComponent<Props, State> {
     const root: Object = await Protobuf.load(path);
 
     this.findMessages(root);
-
-    console.log(root);
   };
 
   render() {
@@ -75,7 +78,7 @@ export default class Proto extends PureComponent<Props, State> {
           <span>{item.name}</span>
           <ul>
             {item.messages.map(msg => (
-              <li key={msg}>{msg}</li>
+              <li key={msg.name}>{msg.name}</li>
             ))}
           </ul>
         </div>
