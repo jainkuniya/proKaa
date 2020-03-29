@@ -14,6 +14,28 @@
   background-color: black;
   color: white;
   padding: 16px;
+  align-items: center;
+}
+
+.headerMessage {
+  font-size: 16px;
+}
+
+.headerRightPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.optionsPanel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: azure;
+}
+
+.options {
+  font-size: 20px;
 }
 
 .list {

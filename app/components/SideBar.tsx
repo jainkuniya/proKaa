@@ -28,6 +28,16 @@ export default class SideBar extends PureComponent<Props, State> {
     };
   }
 
+  reloadProtoFile = () => {
+    const { protos } = this.state;
+    this.setState({
+      protos: []
+    });
+    this.setState({
+      protos: [...protos]
+    });
+  };
+
   loadProtoFile = async () => {
     const { dialog } = remote;
     const result = await dialog.showOpenDialog({
@@ -49,19 +59,32 @@ export default class SideBar extends PureComponent<Props, State> {
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <span>Protos</span>
-          <div>
+          <span>Protos Messages</span>
+          <div className={styles.headerRightPanel}>
             <Switch
               onChange={handleProtoEnableToggle}
               checked={isProtoEnabled}
             />
-            {isProtoEnabled && (
-              <button type="button" onClick={this.loadProtoFile}>
-                +
-              </button>
-            )}
           </div>
         </div>
+        {isProtoEnabled && (
+          <div className={styles.optionsPanel}>
+            <button
+              className={styles.options}
+              type="button"
+              onClick={this.reloadProtoFile}
+            >
+              reload
+            </button>
+            <button
+              className={styles.options}
+              type="button"
+              onClick={this.loadProtoFile}
+            >
+              +
+            </button>
+          </div>
+        )}
         <div className={styles.list}>
           {protos.map(proto => (
             <Proto
