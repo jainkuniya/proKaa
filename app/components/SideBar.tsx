@@ -8,7 +8,12 @@ type State = {
   protos: string[];
 };
 
-type Props = {};
+type Props = {
+  onMessageItemSelect: (msg: {
+    name: string;
+    fields: Record<string, any>;
+  }) => void;
+};
 
 export default class SideBar extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -31,6 +36,7 @@ export default class SideBar extends PureComponent<Props, State> {
 
   render() {
     const { protos } = this.state;
+    const { onMessageItemSelect } = this.props;
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
@@ -41,7 +47,11 @@ export default class SideBar extends PureComponent<Props, State> {
         </div>
         <div className={styles.list}>
           {protos.map(proto => (
-            <Proto key={proto} path={proto} />
+            <Proto
+              key={proto}
+              path={proto}
+              onMessageItemSelect={onMessageItemSelect}
+            />
           ))}
         </div>
       </div>

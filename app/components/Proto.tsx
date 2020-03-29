@@ -14,6 +14,10 @@ type State = {
 
 type Props = {
   path: string;
+  onMessageItemSelect: (msg: {
+    name: string;
+    fields: Record<string, any>;
+  }) => void;
 };
 
 export default class Proto extends PureComponent<Props, State> {
@@ -72,13 +76,18 @@ export default class Proto extends PureComponent<Props, State> {
 
   render() {
     const { items } = this.state;
+    const { onMessageItemSelect } = this.props;
     return items.map(item => {
       return (
         <div key={item}>
           <span>{item.name}</span>
           <ul>
             {item.messages.map(msg => (
-              <li key={msg.name}>{msg.name}</li>
+              <li key={msg.name}>
+                <button type="button" onClick={() => onMessageItemSelect(msg)}>
+                  {msg.name}
+                </button>
+              </li>
             ))}
           </ul>
         </div>

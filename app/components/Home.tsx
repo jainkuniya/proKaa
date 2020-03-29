@@ -58,12 +58,21 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
+  onMessageItemSelect = (msg: {
+    name: string;
+    fields: Record<string, any>;
+  }) => {
+    this.setState({
+      message: msg.name
+    });
+  };
+
   render() {
     const { host, message, topic } = this.state;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
-          <SideBar />
+          <SideBar onMessageItemSelect={this.onMessageItemSelect} />
         </div>
         <div className={styles.rightPanel}>
           <span className={styles.inputRow}>
