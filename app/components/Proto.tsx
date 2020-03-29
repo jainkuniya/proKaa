@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import Protobuf from 'protobufjs';
 
-import styles from './Proto.css';
+import styles, { message } from './Proto.css';
 
 type Item = {
   name: string;
@@ -43,7 +43,10 @@ export default class Proto extends PureComponent<Props, State> {
       const subPackageName = subPackages[i];
       if (!tree.nested[subPackageName].nested) {
         const messages = Object.keys(tree.nested);
-        this.setItems(packageName, messages);
+        this.setItems(
+          packageName,
+          messages.filter(msgName => tree.nested[msgName].fields)
+        );
         break;
       }
       let str = '';
@@ -61,7 +64,7 @@ export default class Proto extends PureComponent<Props, State> {
 
     this.findMessages(root);
 
-    console.log(this.state);
+    console.log(root);
   };
 
   render() {
@@ -71,8 +74,8 @@ export default class Proto extends PureComponent<Props, State> {
         <div key={item}>
           <span>{item.name}</span>
           <ul>
-            {item.messages.map(message => (
-              <li key={message}>{message}</li>
+            {item.messages.map(msg => (
+              <li key={msg}>{msg}</li>
             ))}
           </ul>
         </div>
