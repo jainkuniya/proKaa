@@ -3,8 +3,11 @@ import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
 import { routerMiddleware, routerActions } from 'connected-react-router';
 import { createLogger } from 'redux-logger';
+import createElectronStorage from 'redux-persist-electron-storage';
+import { persistStore, persistReducer } from 'redux-persist';
+
 import createRootReducer from '../reducers';
-import * as counterActions from '../actions/counter';
+import * as counterActions from '../actions/appConfig';
 import { counterStateType } from '../reducers/types';
 
 declare global {
@@ -67,8 +70,17 @@ const configureStore = (initialState?: counterStateType) => {
   enhancers.push(applyMiddleware(...middleware));
   const enhancer = composeEnhancers(...enhancers);
 
+  const persistConfig = {
+    key: 'counter',
+    storage: createElectronStorage()
+  };
+
+  const persistedReducer = persistReducer(persistConfig, rootReducer);
+
   // Create Store
-  const store = createStore(rootReducer, initialState, enhancer);
+  const store = createStore(persistedReducer, initialState, enhancer);
+
+  persistStore(store);
 
   if (module.hot) {
     module.hot.accept(

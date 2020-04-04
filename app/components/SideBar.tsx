@@ -1,9 +1,12 @@
 import React, { PureComponent } from 'react';
 import Switch from 'react-switch';
 import { remote } from 'electron';
+import { bindActionCreators, Dispatch } from 'redux';
+import { connect } from 'react-redux';
 
 import styles from './SideBar.css';
 import Proto from './Proto';
+import { toggleEnableProtoAction } from '../actions/appConfig';
 
 type State = {
   protos: string[];
@@ -20,7 +23,7 @@ type Props = {
   }) => void;
 };
 
-export default class SideBar extends PureComponent<Props, State> {
+class SideBar extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -53,8 +56,10 @@ export default class SideBar extends PureComponent<Props, State> {
     if (!checked) {
       this.setState({ protos: [] });
     }
-    const { handleProtoEnableToggle } = this.props;
-    handleProtoEnableToggle(checked);
+
+    const { handleEnableProtoToggleChange } = this.props;
+
+    handleEnableProtoToggleChange(checked);
   };
 
   render() {
@@ -102,3 +107,20 @@ export default class SideBar extends PureComponent<Props, State> {
     );
   }
 }
+
+function mapStateToProps(state: counterStateType) {
+  return {
+    isProtoEnabled: state.appConfig.protoEnabled
+  };
+}
+
+function mapDispatchToProps(dispatch: Dispatch) {
+  return bindActionCreators(
+    {
+      handleEnableProtoToggleChange: toggleEnableProtoAction
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(SideBar);

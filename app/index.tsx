@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { render } from 'react-dom';
+import { AppContainer as ReactHotAppContainer } from 'react-hot-loader';
+import { configureStore, history } from './store/configureStore';
+
 import './app.global.css';
-import Home from './components/Home';
+import Root from './containers/Root';
+
+const store = configureStore({ protoEnabled: false });
+console.log(store.getState());
+const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
 document.addEventListener('DOMContentLoaded', () =>
-  render(<Home />, document.getElementById('root'))
+  render(
+    <AppContainer>
+      <Root store={store} history={history} />
+    </AppContainer>,
+    document.getElementById('root')
+  )
 );

@@ -25,19 +25,12 @@ export default class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      isProtoEnabled: false,
       message: { type: 'string', content: '' },
       host: 'localhost:9092',
       topic: 'topic123',
       loading: false
     };
   }
-
-  handleProtoEnableToggle = (enabled: boolean) => {
-    this.setState({
-      isProtoEnabled: enabled
-    });
-  };
 
   handleMessageChange = (event: { target: { value: string } }) => {
     this.setState({
@@ -177,15 +170,11 @@ export default class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { host, message, topic, isProtoEnabled, loading } = this.state;
+    const { host, message, topic, loading } = this.state;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
-          <SideBar
-            handleProtoEnableToggle={this.handleProtoEnableToggle}
-            onMessageItemSelect={this.onMessageItemSelect}
-            isProtoEnabled={isProtoEnabled}
-          />
+          <SideBar onMessageItemSelect={this.onMessageItemSelect} />
         </div>
         <div className={styles.rightPanel}>
           <span className={styles.inputRow}>
