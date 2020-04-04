@@ -78,7 +78,11 @@ const configureStore = (initialState?: counterStateType) => {
   const persistedReducer = persistReducer(persistConfig, rootReducer);
 
   // Create Store
-  const store = createStore(persistedReducer, initialState, enhancer);
+  const store = createStore(
+    persistedReducer,
+    { appConfig: { protoEnabled: false }, appCache: { paths: [] } },
+    enhancer
+  );
 
   persistStore(store);
 

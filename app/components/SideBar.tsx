@@ -7,10 +7,7 @@ import { connect } from 'react-redux';
 import styles from './SideBar.css';
 import Proto from './Proto';
 import { toggleEnableProtoAction } from '../actions/appConfig';
-
-type State = {
-  protos: string[];
-};
+import { updateProtoPathsAction } from '../actions/appCache';
 
 type Props = {
   isProtoEnabled: boolean;
@@ -24,47 +21,26 @@ type Props = {
 };
 
 class SideBar extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      protos: []
-    };
-  }
-
-  reloadProtoFile = () => {
-    const { protos } = this.state;
-    this.setState({
-      protos: []
-    });
-    this.setState({
-      protos: [...protos]
-    });
-  };
+  reloadProtoFile = () => {};
 
   loadProtoFile = async () => {
     const { dialog } = remote;
     const result = await dialog.showOpenDialog({
       properties: ['openFile']
     });
-    const { protos } = this.state;
-    this.setState({
-      protos: [...protos, ...result.filePaths]
-    });
+
+    const { updateProtoPaths } = this.props;
+    updateProtoPaths(result.filePaths);
   };
 
   handleProtoEnableToggle = (checked: boolean) => {
-    if (!checked) {
-      this.setState({ protos: [] });
-    }
-
     const { handleEnableProtoToggleChange } = this.props;
 
     handleEnableProtoToggleChange(checked);
   };
 
   render() {
-    const { protos } = this.state;
-    const { onMessageItemSelect, isProtoEnabled } = this.props;
+    const { onMessageItemSelect, isProtoEnabled, protoPaths } = this.props;
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
@@ -95,7 +71,7 @@ class SideBar extends PureComponent<Props, State> {
           </div>
         )}
         <div className={styles.list}>
-          {protos.map(proto => (
+          {protoPaths.map(proto => (
             <Proto
               key={proto}
               path={proto}
@@ -110,14 +86,16 @@ class SideBar extends PureComponent<Props, State> {
 
 function mapStateToProps(state: counterStateType) {
   return {
-    isProtoEnabled: state.appConfig.protoEnabled
+    isProtoEnabled: state.appConfig.protoEnabled,
+    protoPaths: state.appCache.paths
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators(
     {
-      handleEnableProtoToggleChange: toggleEnableProtoAction
+      handleEnableProtoToggleChange: toggleEnableProtoAction,
+      updateProtoPaths: updateProtoPathsAction
     },
     dispatch
   );
