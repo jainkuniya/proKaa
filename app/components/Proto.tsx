@@ -1,16 +1,17 @@
 import React, { PureComponent } from 'react';
 import Protobuf from 'protobufjs';
+import { bindActionCreators, Dispatch } from 'redux';
+import { connect } from 'react-redux';
 
 import styles, { message } from './Proto.css';
+import { updateProtoMessagesAction } from '../actions/appCache';
 
 type Item = {
   name: string;
   messages: { name: string; fields: any };
 };
 
-type State = {
-  items: Item[];
-};
+type State = {};
 
 type Props = {
   path: string;
@@ -22,24 +23,14 @@ type Props = {
   }) => void;
 };
 
-export default class Proto extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      items: []
-    };
-  }
-
+class Proto extends PureComponent<Props, State> {
   componentDidMount() {
     this.loadProto();
   }
 
   setItems = (packageName: string, messages: string[]) => {
-    const { items } = this.state;
-    this.setState({
-      items: [...items, { name: packageName, messages }]
-    });
+    const { updateProtoMessages } = this.props;
+    updateProtoMessages({ name: packageName, messages });
   };
 
   findMessages = (tree, packageName?: string) => {
@@ -77,34 +68,55 @@ export default class Proto extends PureComponent<Props, State> {
   };
 
   render() {
-    const { items } = this.state;
-    const { onMessageItemSelect, path } = this.props;
-    return items.map(item => {
+    const { messages, onMessageItemSelect, path } = this.props;
+    if (!messages) {
+      return null;
+    }
+    return messages.map(item => {
+      console.log(item);
       return (
         <div className={styles.wrapper} key={item}>
           <span className={styles.packageName}>{item.name}</span>
           <ul>
-            {item.messages.map(msg => (
-              <li key={msg.name}>
-                <button
-                  type="button"
-                  onClick={
-                    () =>
-                      onMessageItemSelect({
-                        ...msg,
-                        proto: path,
-                        packageName: item.name
-                      })
-                    // eslint-disable-next-line react/jsx-curly-newline
-                  }
-                >
-                  {msg.name}
-                </button>
-              </li>
-            ))}
+            {item.messages &&
+              item.messages.map(msg => (
+                <li key={msg.name}>
+                  <button
+                    type="button"
+                    onClick={
+                      () =>
+                        onMessageItemSelect({
+                          ...msg,
+                          proto: path,
+                          packageName: item.name
+                        })
+                      // eslint-disable-next-line react/jsx-curly-newline
+                    }
+                  >
+                    {msg.name}
+                  </button>
+                </li>
+              ))}
           </ul>
         </div>
       );
     });
   }
 }
+
+function mapStateToProps(state: counterStateType) {
+  return {
+    messages: state.appCache.messages
+  };
+}
+
+function mapDispatchToProps(dispatch: Dispatch) {
+  return bindActionCreators(
+    {
+      updateProtoMessages: updateProtoMessagesAction
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Proto);

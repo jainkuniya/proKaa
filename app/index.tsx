@@ -7,7 +7,6 @@ import './app.global.css';
 import Root from './containers/Root';
 
 const store = configureStore({ protoEnabled: false });
-console.log(store.getState());
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
 document.addEventListener('DOMContentLoaded', () =>
