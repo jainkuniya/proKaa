@@ -8,7 +8,6 @@ import { persistStore, persistReducer } from 'redux-persist';
 
 import createRootReducer from '../reducers';
 import * as counterActions from '../actions/appConfig';
-import { counterStateType } from '../reducers/types';
 
 declare global {
   interface Window {
@@ -28,7 +27,7 @@ const history = createHashHistory();
 
 const rootReducer = createRootReducer(history);
 
-const configureStore = (initialState?: counterStateType) => {
+const configureStore = () => {
   // Redux Configuration
   const middleware = [];
   const enhancers = [];
@@ -78,16 +77,10 @@ const configureStore = (initialState?: counterStateType) => {
   const persistedReducer = persistReducer(persistConfig, rootReducer);
 
   // Create Store
-  const store = createStore(
-    persistedReducer,
-    {
-      appConfig: { protoEnabled: false },
-      appCache: { paths: [], messages: [] }
-    },
-    enhancer
-  );
+  const store = createStore(persistedReducer, {}, enhancer);
 
-  persistStore(store);
+  const persister = persistStore(store);
+  // persister.purge();
 
   if (module.hot) {
     module.hot.accept(

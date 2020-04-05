@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import Switch from 'react-switch';
+import Protobuf from 'protobufjs';
 import { remote } from 'electron';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
@@ -20,6 +21,42 @@ type Props = {
   }) => void;
 };
 
+const findMessages = (tree, packageName?: string) => {
+  const subPackages = Object.keys(tree.nested);
+  let data = {};
+  for (let i = 0; i < subPackages.length; i += 1) {
+    const subPackageName = subPackages[i];
+    if (!tree.nested[subPackageName].nested) {
+      const messages = Object.keys(tree.nested);
+      return {
+        [packageName]: {
+          packageName,
+          messages: messages
+            .filter(msgName => tree.nested[msgName].fields)
+            .map(msgName => ({
+              name: msgName,
+              fields: tree.nested[msgName].fields
+            }))
+        }
+      };
+    }
+    let str = '';
+    if (packageName) {
+      str = `${packageName}.`;
+    }
+    data = {
+      ...data,
+      ...findMessages(tree.nested[subPackageName], `${str}${subPackageName}`)
+    };
+  }
+  return data;
+};
+
+const decodeProtoFile = async (path: string) => {
+  const root: Record<string, any> = await Protobuf.load(path);
+  return findMessages(root);
+};
+
 class SideBar extends PureComponent<Props, State> {
   reloadProtoFile = () => {};
 
@@ -29,8 +66,21 @@ class SideBar extends PureComponent<Props, State> {
       properties: ['openFile']
     });
 
+    let updatedProtos = [];
+    for (let i = 0; i < result.filePaths.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const data = await decodeProtoFile(result.filePaths[i]);
+      updatedProtos = [
+        ...updatedProtos,
+        {
+          filepath: result.filePaths[i],
+          data
+        }
+      ];
+    }
+
     const { updateProtoPaths } = this.props;
-    updateProtoPaths(result.filePaths);
+    updateProtoPaths(updatedProtos);
   };
 
   handleProtoEnableToggle = (checked: boolean) => {
@@ -40,7 +90,7 @@ class SideBar extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onMessageItemSelect, isProtoEnabled, protoPaths } = this.props;
+    const { onMessageItemSelect, isProtoEnabled, protos } = this.props;
     return (
       <div className={styles.wrapper}>
         <div className={styles.header}>
@@ -71,10 +121,10 @@ class SideBar extends PureComponent<Props, State> {
           </div>
         )}
         <div className={styles.list}>
-          {protoPaths.map(proto => (
+          {Object.keys(protos).map(id => (
             <Proto
-              key={proto}
-              path={proto}
+              key={id}
+              proto={protos[id]}
               onMessageItemSelect={onMessageItemSelect}
             />
           ))}
@@ -87,7 +137,7 @@ class SideBar extends PureComponent<Props, State> {
 function mapStateToProps(state: counterStateType) {
   return {
     isProtoEnabled: state.appConfig.protoEnabled,
-    protoPaths: state.appCache.paths
+    protos: state.appCache.protos
   };
 }
 
