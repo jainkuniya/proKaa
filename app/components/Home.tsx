@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+import { bindActionCreators, Dispatch } from 'redux';
+import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
 import ClipLoader from 'react-spinners/ClipLoader';
 import kafka from 'kafka-node';
@@ -21,7 +23,7 @@ type State = {
 
 type Props = {};
 
-export default class Home extends PureComponent<Props, State> {
+class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -101,7 +103,64 @@ export default class Home extends PureComponent<Props, State> {
     });
   };
 
-  getValueOfType = (type: string, fieldName: string) => {
+  getCustomMessageMock = (
+    fieldName: string,
+    type: string,
+    filepath: string,
+    packageName: string
+  ) => {
+    const { protos } = this.props;
+    const mock = {};
+    Object.keys(protos).forEach(key => {
+      console.log(protos[key].filepath, filepath);
+      if (protos[key].filepath === filepath) {
+        console.log('found message in same filepath');
+        if (type.includes('.')) {
+          console.log('found message with another package');
+          const split = type.split('.');
+          const msgName = split.pop();
+          const newPackageName = `${split.join('.')}`;
+          Object.keys(protos[key].data[newPackageName].messages).forEach(k => {
+            const msg = protos[key].data[newPackageName].messages[k];
+            console.log(msg, k, fieldName);
+            if (msg.name === msgName) {
+              Object.keys(msg.fields).forEach(fi => {
+                mock[fi] = this.getValueOfType(
+                  msg.fields[fi].type,
+                  fieldName,
+                  filepath,
+                  newPackageName
+                );
+              });
+            }
+          });
+        } else {
+          Object.keys(protos[key].data[packageName].messages).forEach(k => {
+            const msg = protos[key].data[packageName].messages[k];
+            console.log(msg, k, fieldName);
+            if (msg.name === type) {
+              Object.keys(msg.fields).forEach(fi => {
+                mock[fi] = this.getValueOfType(
+                  msg.fields[fi].type,
+                  fieldName,
+                  filepath,
+                  packageName
+                );
+              });
+            }
+          });
+        }
+      }
+    });
+    return mock;
+  };
+
+  getValueOfType = (
+    type: string,
+    fieldName: string,
+    filepath: string,
+    packageName: string
+  ) => {
     switch (type) {
       case 'string': {
         const fieldNameLower = fieldName.toLowerCase();
@@ -143,7 +202,12 @@ export default class Home extends PureComponent<Props, State> {
       case 'bytes':
         return Buffer.from('Hello');
       default:
-        return null;
+        return this.getCustomMessageMock(
+          fieldName,
+          type,
+          filepath,
+          packageName
+        );
     }
   };
 
@@ -153,12 +217,13 @@ export default class Home extends PureComponent<Props, State> {
     proto: string;
     packageName: string;
   }) => {
-    console.log(msg);
     const obj = {};
     Object.keys(msg.fields).forEach(fieldName => {
       obj[fieldName] = this.getValueOfType(
         msg.fields[fieldName].type,
-        fieldName
+        fieldName,
+        msg.proto,
+        msg.packageName
       );
     });
     this.setState({
@@ -233,3 +298,15 @@ export default class Home extends PureComponent<Props, State> {
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    protos: state.appCache.protos
+  };
+}
+
+function mapDispatchToProps(dispatch: Dispatch) {
+  return bindActionCreators({}, dispatch);
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);
