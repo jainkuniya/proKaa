@@ -122,7 +122,6 @@ class Home extends PureComponent<Props, State> {
           const newPackageName = `${split.join('.')}`;
           Object.keys(protos[key].data[newPackageName].messages).forEach(k => {
             const msg = protos[key].data[newPackageName].messages[k];
-            console.log(msg, k, fieldName);
             if (msg.name === msgName) {
               Object.keys(msg.fields).forEach(fi => {
                 mock[fi] = this.getValueOfType(
@@ -137,7 +136,6 @@ class Home extends PureComponent<Props, State> {
         } else {
           Object.keys(protos[key].data[packageName].messages).forEach(k => {
             const msg = protos[key].data[packageName].messages[k];
-            console.log(msg, k, fieldName);
             if (msg.name === type) {
               Object.keys(msg.fields).forEach(fi => {
                 mock[fi] = this.getValueOfType(
@@ -219,12 +217,17 @@ class Home extends PureComponent<Props, State> {
   }) => {
     const obj = {};
     Object.keys(msg.fields).forEach(fieldName => {
-      obj[fieldName] = this.getValueOfType(
+      const mock = this.getValueOfType(
         msg.fields[fieldName].type,
         fieldName,
         msg.proto,
         msg.packageName
       );
+      if (msg.fields[fieldName].rule === 'repeated') {
+        obj[fieldName] = [mock];
+      } else {
+        obj[fieldName] = mock;
+      }
     });
     this.setState({
       message: { type: 'object', content: obj },
