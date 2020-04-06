@@ -283,6 +283,7 @@ class Home extends PureComponent<Props, State> {
                 enableClipboard={false}
                 src={{ ...message.content }}
                 onEdit={this.onMessageEdit}
+                onAdd={this.onMessageEdit}
               />
             )}
           </div>
