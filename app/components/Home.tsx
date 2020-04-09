@@ -68,7 +68,11 @@ class Home extends PureComponent<Props, State> {
       packageName
     } = this.state;
     const { Producer } = kafka;
-    const client = new kafka.KafkaClient({ kafkaHost: host });
+    const client = new kafka.KafkaClient({
+      kafkaHost: host,
+      connectTimeout: 2000,
+      requestTimeout: 2000
+    });
     const producer = new Producer(client);
     let payloads;
     if (message.type === 'string') {
@@ -83,10 +87,12 @@ class Home extends PureComponent<Props, State> {
       const buffer = protoMessage.encode(msg).finish();
       payloads = [{ topic, messages: buffer }];
     }
-    this.setState({
-      loading: true
-    });
+    // this.setState({
+    //   loading: true
+    // });
+    console.log(payloads);
     producer.on('ready', () => {
+      console.log('producer ready');
       producer.send(payloads, (err, data) => {
         this.setState({
           loading: false
@@ -112,7 +118,6 @@ class Home extends PureComponent<Props, State> {
     const { protos } = this.props;
     const mock = {};
     Object.keys(protos).forEach(key => {
-      console.log(protos[key].filepath, filepath);
       if (protos[key].filepath === filepath) {
         console.log('found message in same filepath');
         if (type.includes('.')) {
@@ -122,15 +127,46 @@ class Home extends PureComponent<Props, State> {
           const newPackageName = `${split.join('.')}`;
           Object.keys(protos[key].data[newPackageName].messages).forEach(k => {
             const msg = protos[key].data[newPackageName].messages[k];
+
             if (msg.name === msgName) {
               Object.keys(msg.fields).forEach(fi => {
-                mock[fi] = this.getValueOfType(
+                const mockValue = this.getValueOfType(
                   msg.fields[fi].type,
-                  fieldName,
+                  fi,
                   filepath,
                   newPackageName
                 );
+                console.log(fi, mockValue);
+                if (msg.fields[fi].rule === 'repeated') {
+                  mock[fi] = [mockValue];
+                  if (msg.fields[fi].keyType) {
+                    // map
+                    const typeMock = this.getValueOfType(
+                      msg.fields[fi].keyType,
+                      fi,
+                      filepath,
+                      newPackageName
+                    );
+                    mock[fi] = {};
+                    mock[fi][typeMock] = mockValue;
+                  }
+                } else {
+                  mock[fi] = mockValue;
+                  if (msg.fields[fi].keyType) {
+                    // map
+                    const typeMock = this.getValueOfType(
+                      msg.fields[fi].keyType,
+                      fi,
+                      filepath,
+                      newPackageName
+                    );
+                    mock[fi] = {};
+                    mock[fi][typeMock] = mockValue;
+                  }
+                }
+                // mock[fi] = subMock;
               });
+              //     console.log(msgName, subMock);
             }
           });
         } else {
@@ -138,12 +174,39 @@ class Home extends PureComponent<Props, State> {
             const msg = protos[key].data[packageName].messages[k];
             if (msg.name === type) {
               Object.keys(msg.fields).forEach(fi => {
-                mock[fi] = this.getValueOfType(
+                const mockValue = this.getValueOfType(
                   msg.fields[fi].type,
-                  fieldName,
+                  fi,
                   filepath,
                   packageName
                 );
+                if (msg.fields[fi].rule === 'repeated') {
+                  mock[fi] = [mockValue];
+                  if (msg.fields[fi].keyType) {
+                    // map
+                    const typeMock = this.getValueOfType(
+                      msg.fields[fi].keyType,
+                      fi,
+                      filepath,
+                      newPackageName
+                    );
+                    mock[fi] = {};
+                    mock[fi][typeMock] = mockValue;
+                  }
+                } else {
+                  mock[fi] = mockValue;
+                  if (msg.fields[fi].keyType) {
+                    // map
+                    const typeMock = this.getValueOfType(
+                      msg.fields[fi].keyType,
+                      fi,
+                      filepath,
+                      newPackageName
+                    );
+                    mock[fi] = {};
+                    mock[fi][typeMock] = mockValue;
+                  }
+                }
               });
             }
           });
@@ -216,6 +279,7 @@ class Home extends PureComponent<Props, State> {
     packageName: string;
   }) => {
     const obj = {};
+    console.log(msg);
     Object.keys(msg.fields).forEach(fieldName => {
       const mock = this.getValueOfType(
         msg.fields[fieldName].type,
@@ -225,10 +289,35 @@ class Home extends PureComponent<Props, State> {
       );
       if (msg.fields[fieldName].rule === 'repeated') {
         obj[fieldName] = [mock];
+
+        if (msg.fields[fieldName].keyType) {
+          // map
+          const typeMock = this.getValueOfType(
+            msg.fields[fieldName].keyType,
+            fieldName,
+            msg.proto,
+            msg.packageName
+          );
+          obj[fieldName] = {};
+          obj[fieldName][typeMock] = mock;
+        }
       } else {
         obj[fieldName] = mock;
+
+        if (msg.fields[fieldName].keyType) {
+          // map
+          const typeMock = this.getValueOfType(
+            msg.fields[fieldName].keyType,
+            fieldName,
+            msg.proto,
+            msg.packageName
+          );
+          obj[fieldName] = {};
+          obj[fieldName][typeMock] = mock;
+        }
       }
     });
+    console.log(JSON.stringify(obj, null, 2));
     this.setState({
       message: { type: 'object', content: obj },
       messageName: msg.name,
@@ -239,6 +328,7 @@ class Home extends PureComponent<Props, State> {
 
   render() {
     const { host, message, topic, loading } = this.state;
+    const { isProtoEnabled } = this.props;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
@@ -268,7 +358,7 @@ class Home extends PureComponent<Props, State> {
             />
           </span>
           <div className={styles.messageContainer}>
-            {typeof message.content === 'string' ? (
+            {!isProtoEnabled ? (
               <textarea
                 className={styles.messageInput}
                 value={message.content}
@@ -305,6 +395,7 @@ class Home extends PureComponent<Props, State> {
 
 function mapStateToProps(state) {
   return {
+    isProtoEnabled: state.appConfig.protoEnabled,
     protos: state.appCache.protos
   };
 }
