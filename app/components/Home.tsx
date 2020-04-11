@@ -72,9 +72,7 @@ class Home extends PureComponent<Props, State> {
     } = this.state;
     const { Producer } = kafka;
     const client = new kafka.KafkaClient({
-      kafkaHost: host,
-      connectTimeout: 5,
-      requestTimeout: 5
+      kafkaHost: host
     });
     const producer = new Producer(client);
     let payloads;
