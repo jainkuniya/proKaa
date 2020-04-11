@@ -111,7 +111,6 @@ class Home extends PureComponent<Props, State> {
         console.log(err, data);
         producer.close();
         client.close();
-        process.exit();
       });
     });
 
