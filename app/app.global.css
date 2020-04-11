@@ -5,12 +5,10 @@
 @import '~@fortawesome/fontawesome-free/css/all.css';
 
 html {
-  height: 100%;
-  width: 100%;
+  overflow-y: hidden;
 }
 
 body {
   font-family: Arial, Helvetica, Helvetica Neue, serif;
   background-color: #defefe;
-  height: 100%;
 }
