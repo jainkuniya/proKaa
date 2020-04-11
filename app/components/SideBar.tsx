@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import styles from './SideBar.css';
 import Proto from './Proto';
 import { toggleEnableProtoAction } from '../actions/appConfig';
-import { updateProtoPathsAction } from '../actions/appCache';
+import { updateProtoPathsAction, cleanAction } from '../actions/appCache';
 
 type Props = {
   isProtoEnabled: boolean;
@@ -28,15 +28,27 @@ const findMessages = (tree, packageName?: string) => {
     const subPackageName = subPackages[i];
     if (!tree.nested[subPackageName].nested) {
       const messages = Object.keys(tree.nested);
+      let nestesMessages = [];
+      messages.forEach(k => {
+        if (tree.nested[k].nested) {
+          const temp = findMessages(tree.nested[k], packageName);
+          Object.keys(temp).forEach(it => {
+            nestesMessages = [...nestesMessages, ...temp[it].messages];
+          });
+        }
+      });
       return {
         [packageName]: {
           packageName,
-          messages: messages
-            .filter(msgName => tree.nested[msgName].fields)
-            .map(msgName => ({
-              name: msgName,
-              fields: tree.nested[msgName].fields
-            }))
+          messages: [
+            ...nestesMessages,
+            ...messages
+              .filter(msgName => tree.nested[msgName].fields)
+              .map(msgName => ({
+                name: msgName,
+                fields: tree.nested[msgName].fields
+              }))
+          ]
         }
       };
     }
@@ -91,6 +103,11 @@ class SideBar extends PureComponent<Props, State> {
     handleEnableProtoToggleChange(checked);
   };
 
+  clean = () => {
+    const { cleanAppCacheAction } = this.props;
+    cleanAppCacheAction();
+  };
+
   render() {
     const { onMessageItemSelect, isProtoEnabled, protos } = this.props;
     return (
@@ -112,6 +129,13 @@ class SideBar extends PureComponent<Props, State> {
               onClick={this.reloadProtoFile}
             >
               reload
+            </button>
+            <button
+              className={styles.options}
+              type="button"
+              onClick={this.clean}
+            >
+              clean
             </button>
             <button
               className={styles.options}
@@ -147,7 +171,8 @@ function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators(
     {
       handleEnableProtoToggleChange: toggleEnableProtoAction,
-      updateProtoPaths: updateProtoPathsAction
+      updateProtoPaths: updateProtoPathsAction,
+      cleanAppCacheAction: cleanAction
     },
     dispatch
   );

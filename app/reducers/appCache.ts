@@ -1,6 +1,6 @@
 import { Action } from 'redux';
 
-import { UPDATE_PROTO_PATH } from '../actions/appCache';
+import { UPDATE_PROTO_PATH, CLEAN_APP_CACHE } from '../actions/appCache';
 
 export default function counter(
   state = { protos: [] },
@@ -12,6 +12,9 @@ export default function counter(
         ...state,
         protos: [...state.protos, ...action.updatedProtos]
       };
+    }
+    case CLEAN_APP_CACHE: {
+      return { protos: [] };
     }
     default:
       return state;
