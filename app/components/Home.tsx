@@ -70,26 +70,37 @@ class Home extends PureComponent<Props, State> {
     const { Producer } = kafka;
     const client = new kafka.KafkaClient({
       kafkaHost: host,
-      connectTimeout: 2000,
-      requestTimeout: 2000
+      connectTimeout: 5,
+      requestTimeout: 5
     });
     const producer = new Producer(client);
     let payloads;
     if (message.type === 'string') {
-      payloads = [{ topic, messages: message }];
+      payloads = [{ topic, messages: message, key: uuidv4() }];
     } else {
       const root: Record<string, any> = await Protobuf.load(proto);
       console.log(`${packageName}.${messageName}`);
       const protoMessage = root.lookupType(`${packageName}.${messageName}`);
       const errMsg = protoMessage.verify(message.content);
-      if (errMsg) console.log(errMsg);
+      if (errMsg) {
+        console.log(errMsg);
+        return;
+      }
       const msg = protoMessage.create(message.content);
       const buffer = protoMessage.encode(msg).finish();
       payloads = [{ topic, messages: buffer }];
     }
-    // this.setState({
-    //   loading: true
-    // });
+    this.setState({
+      loading: true
+    });
+
+    client.on('ready', function() {
+      console.log('client ready');
+    });
+
+    client.on('error', function(err) {
+      console.log(`client error: ${err}`);
+    });
     console.log(payloads);
     producer.on('ready', () => {
       console.log('producer ready');
@@ -98,6 +109,9 @@ class Home extends PureComponent<Props, State> {
           loading: false
         });
         console.log(err, data);
+        producer.close();
+        client.close();
+        process.exit();
       });
     });
 
@@ -262,13 +276,15 @@ class Home extends PureComponent<Props, State> {
         return 1.1;
       case 'bytes':
         return Buffer.from('Hello');
-      default:
-        return this.getCustomMessageMock(
+      default: {
+        const mock = this.getCustomMessageMock(
           fieldName,
           type,
           filepath,
           packageName
         );
+        return Object.keys(mock) === 0 ? 0 : mock;
+      }
     }
   };
 
@@ -382,7 +398,6 @@ class Home extends PureComponent<Props, State> {
             className={styles.pushButton}
             type="button"
             onClick={this.sendMessage}
-            disabled={loading}
           >
             {!loading && <span>Push</span>}
             <ClipLoader size={20} color="#ffffff" loading={loading} />
