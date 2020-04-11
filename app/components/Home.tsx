@@ -11,17 +11,17 @@ import styles from './Home.css';
 import SideBar from './SideBar';
 
 type State = {
-  isProtoEnabled: boolean;
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
   host: string;
   topic: string;
   loading: boolean;
+  error?: '';
   proto?: string;
   packageName?: string;
   messageName?: string;
 };
 
-type Props = {};
+type Props = { isProtoEnabled: boolean };
 
 class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -59,6 +59,9 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
+    this.setState({
+      error: ''
+    });
     const {
       host,
       message,
@@ -84,6 +87,9 @@ class Home extends PureComponent<Props, State> {
       const errMsg = protoMessage.verify(message.content);
       if (errMsg) {
         console.log(errMsg);
+        this.setState({
+          error: errMsg
+        });
         return;
       }
       const msg = protoMessage.create(message.content);
@@ -117,7 +123,8 @@ class Home extends PureComponent<Props, State> {
     producer.on('error', err => {
       console.log(err);
       this.setState({
-        loading: false
+        loading: false,
+        error: err
       });
     });
   };
@@ -293,6 +300,9 @@ class Home extends PureComponent<Props, State> {
     proto: string;
     packageName: string;
   }) => {
+    this.setState({
+      error: ''
+    });
     const obj = {};
     console.log(msg);
     Object.keys(msg.fields).forEach(fieldName => {
@@ -342,7 +352,7 @@ class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { host, message, topic, loading } = this.state;
+    const { host, message, topic, loading, error } = this.state;
     const { isProtoEnabled } = this.props;
     return (
       <div className={styles.container} data-tid="container">
@@ -392,7 +402,9 @@ class Home extends PureComponent<Props, State> {
               />
             )}
           </div>
-
+          {error && (
+            <div className={styles.errorWrapper}>{JSON.stringify(error)}</div>
+          )}
           <button
             className={styles.pushButton}
             type="button"
