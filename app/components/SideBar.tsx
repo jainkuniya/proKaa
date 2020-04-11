@@ -55,6 +55,7 @@ const findMessages = (tree, packageName?: string) => {
 const decodeProtoFile = async (path: string) => {
   const root: Record<string, any> = await Protobuf.load(path);
   console.log(root);
+  console.log(JSON.stringify(root));
   return findMessages(root);
 };
 

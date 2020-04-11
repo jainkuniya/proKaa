@@ -231,7 +231,7 @@ class Home extends PureComponent<Props, State> {
         }
       }
     });
-    return mock;
+    return Object.keys(mock).length === 0 ? 0 : mock;
   };
 
   getValueOfType = (
