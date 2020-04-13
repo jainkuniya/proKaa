@@ -4,7 +4,9 @@ import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
 import ClipLoader from 'react-spinners/ClipLoader';
 import kafka from 'kafka-node';
-import Protobuf from 'protobufjs';
+import fs from 'fs';
+// import Protobuf from 'protobufjs';
+import protobuf from 'protocol-buffers';
 import { v4 as uuidv4 } from 'uuid';
 
 import styles from './Home.css';
@@ -72,27 +74,24 @@ class Home extends PureComponent<Props, State> {
     } = this.state;
     const { Producer } = kafka;
     const client = new kafka.KafkaClient({
-      kafkaHost: host
+      kafkaHost: host,
+      connectRetryOptions: { retries: 1000 }
     });
     const producer = new Producer(client);
     let payloads;
     if (message.type === 'string') {
       payloads = [{ topic, messages: message, key: uuidv4() }];
     } else {
-      const root: Record<string, any> = await Protobuf.load(proto);
-      console.log(`${packageName}.${messageName}`);
-      const protoMessage = root.lookupType(`${packageName}.${messageName}`);
-      const errMsg = protoMessage.verify(message.content);
-      if (errMsg) {
-        console.log(errMsg);
-        this.setState({
-          error: errMsg
-        });
-        return;
-      }
-      const msg = protoMessage.create(message.content);
-      const buffer = protoMessage.encode(msg).finish();
-      payloads = [{ topic, messages: buffer }];
+      const protoMessages = protobuf(fs.readFileSync(proto));
+      console.log(protoMessages);
+      const buf = protoMessages[messageName].encode({
+        num: 42,
+        payload: 'hello world'
+      });
+
+      console.log(buf);
+
+      payloads = [{ topic, messages: buf }];
     }
     this.setState({
       loading: true
