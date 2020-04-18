@@ -26,12 +26,44 @@ type Props = { isProtoEnabled: boolean };
 class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+
     this.state = {
       message: { type: 'string', content: '' },
       host: 'localhost:9092',
       topic: 'topic123',
       loading: false
     };
+  }
+
+  componentDidMount() {
+    const { host } = this.state;
+    const { Producer } = kafka;
+    const client = new kafka.KafkaClient({
+      kafkaHost: host
+    });
+    const producer = new Producer(client);
+
+    client.on('ready', function() {
+      console.log('client ready');
+    });
+
+    client.on('error', function(err) {
+      console.log(`client error: ${err}`);
+    });
+    producer.on('ready', () => {
+      console.log('producer ready');
+      this.setState({
+        producer
+      });
+    });
+
+    producer.on('error', err => {
+      console.log(err);
+      this.setState({
+        loading: false,
+        error: err
+      });
+    });
   }
 
   handleMessageChange = (event: { target: { value: string } }) => {
@@ -64,18 +96,13 @@ class Home extends PureComponent<Props, State> {
       error: ''
     });
     const {
-      host,
       message,
       messageName,
       topic,
       proto,
-      packageName
+      packageName,
+      producer
     } = this.state;
-    const { Producer } = kafka;
-    const client = new kafka.KafkaClient({
-      kafkaHost: host
-    });
-    const producer = new Producer(client);
     let payloads;
     if (!isProtoEnabled) {
       payloads = [{ topic, messages: message.content }];
@@ -92,7 +119,7 @@ class Home extends PureComponent<Props, State> {
         return;
       }
       const msg = protoMessage.create(message.content);
-      const buffer = protoMessage.encodeDelimited(msg).finish();
+      const buffer = protoMessage.encode(msg).finish();
       // console.log(buffer, protoMessage.decode(buffer));
       payloads = [{ topic, messages: buffer, key: uuidv4() }];
     }
@@ -100,32 +127,14 @@ class Home extends PureComponent<Props, State> {
       loading: true
     });
 
-    client.on('ready', function() {
-      console.log('client ready', payloads);
-    });
-
-    client.on('error', function(err) {
-      console.log(`client error: ${err}`);
-    });
     console.log(payloads);
-    producer.on('ready', () => {
-      console.log('producer ready');
-      producer.send(payloads, (err, data) => {
-        this.setState({
-          loading: false
-        });
-        console.log(err, data);
-        producer.close();
-        client.close();
-      });
-    });
-
-    producer.on('error', err => {
-      console.log(err);
+    producer.send(payloads, (err, data) => {
       this.setState({
-        loading: false,
-        error: err
+        loading: false
       });
+      console.log(err, data);
+      // producer.close();
+      // client.close();
     });
   };
 
@@ -363,6 +372,7 @@ class Home extends PureComponent<Props, State> {
           <span className={styles.inputRow}>
             <span className={styles.label}>Kafka Host:</span>
             <input
+              disabled
               value={host}
               className={styles.input}
               placeholder="localhost:9092"
