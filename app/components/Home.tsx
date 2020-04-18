@@ -59,6 +59,7 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
+    const { isProtoEnabled } = this.props;
     this.setState({
       error: ''
     });
@@ -76,8 +77,8 @@ class Home extends PureComponent<Props, State> {
     });
     const producer = new Producer(client);
     let payloads;
-    if (message.type === 'string') {
-      payloads = [{ topic, messages: message, key: uuidv4() }];
+    if (!isProtoEnabled) {
+      payloads = [{ topic, messages: message.content }];
     } else {
       const root: Record<string, any> = await Protobuf.load(proto);
       console.log(`${packageName}.${messageName}`);
@@ -91,15 +92,16 @@ class Home extends PureComponent<Props, State> {
         return;
       }
       const msg = protoMessage.create(message.content);
-      const buffer = protoMessage.encode(msg).finish();
-      payloads = [{ topic, messages: buffer }];
+      const buffer = protoMessage.encodeDelimited(msg).finish();
+      // console.log(buffer, protoMessage.decode(buffer));
+      payloads = [{ topic, messages: buffer, key: uuidv4() }];
     }
     this.setState({
       loading: true
     });
 
     client.on('ready', function() {
-      console.log('client ready');
+      console.log('client ready', payloads);
     });
 
     client.on('error', function(err) {
