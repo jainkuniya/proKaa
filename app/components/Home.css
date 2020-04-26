@@ -63,6 +63,17 @@
   justify-content: center;
 }
 
+.connectButton {
+  font-size: 14px;
+  background-color: black;
+  color: white;
+  padding: 8px;
+  margin: 8px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
 .errorWrapper {
   margin-top: 8px;
   color: red;

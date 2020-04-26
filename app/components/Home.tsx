@@ -3,22 +3,22 @@ import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
 import ClipLoader from 'react-spinners/ClipLoader';
-import kafka from 'kafka-node';
 import Protobuf from 'protobufjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import styles from './Home.css';
 import SideBar from './SideBar';
+import HostInput from './HostInput';
 
 type State = {
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
-  host: string;
   topic: string;
   loading: boolean;
-  error?: '';
+  error?: string;
   proto?: string;
   packageName?: string;
   messageName?: string;
+  producer?: any; // TODO fix it
 };
 
 type Props = { isProtoEnabled: boolean };
@@ -29,42 +29,14 @@ class Home extends PureComponent<Props, State> {
 
     this.state = {
       message: { type: 'string', content: '' },
-      host: 'localhost:9092',
       topic: 'topic123',
       loading: false
     };
   }
 
-  componentDidMount() {
-    const { host } = this.state;
-    const { Producer } = kafka;
-    const client = new kafka.KafkaClient({
-      kafkaHost: host
-    });
-    const producer = new Producer(client);
-
-    client.on('ready', function() {
-      console.info('client ready');
-    });
-
-    client.on('error', function(err) {
-      console.error(`client error: ${err}`);
-    });
-    producer.on('ready', () => {
-      console.info('producer ready');
-      this.setState({
-        producer
-      });
-    });
-
-    producer.on('error', err => {
-      console.error(err);
-      this.setState({
-        loading: false,
-        error: err
-      });
-    });
-  }
+  updateProducer = (producer, error) => {
+    this.setState({ producer, error });
+  };
 
   handleMessageChange = (event: { target: { value: string } }) => {
     this.setState({
@@ -78,12 +50,6 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  handleHostChange = (host: { target: { value: string } }) => {
-    this.setState({
-      host: host.target.value
-    });
-  };
-
   handleTopicChange = (host: { target: { value: string } }) => {
     this.setState({
       topic: host.target.value
@@ -91,18 +57,19 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
+    const { producer } = this.state;
+    if (!producer) {
+      this.setState({
+        error: 'please connect to the producer'
+      });
+
+      return;
+    }
     const { isProtoEnabled } = this.props;
     this.setState({
       error: ''
     });
-    const {
-      message,
-      messageName,
-      topic,
-      proto,
-      packageName,
-      producer
-    } = this.state;
+    const { message, messageName, topic, proto, packageName } = this.state;
     let payloads;
     if (!isProtoEnabled) {
       payloads = [{ topic, messages: message.content }];
@@ -355,7 +322,7 @@ class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { host, message, topic, loading, error } = this.state;
+    const { message, topic, loading, error } = this.state;
     const { isProtoEnabled } = this.props;
     return (
       <div className={styles.container} data-tid="container">
@@ -363,18 +330,7 @@ class Home extends PureComponent<Props, State> {
           <SideBar onMessageItemSelect={this.onMessageItemSelect} />
         </div>
         <div className={styles.rightPanel}>
-          <span className={styles.inputRow}>
-            <span className={styles.label}>Kafka Host:</span>
-            <input
-              disabled
-              value={host}
-              className={styles.input}
-              placeholder="localhost:9092"
-              onChange={e => {
-                this.handleHostChange(e);
-              }}
-            />
-          </span>
+          <HostInput updateProducer={this.updateProducer} />
           <span className={styles.inputRow}>
             <span className={styles.label}>Topic:</span>
             <input
