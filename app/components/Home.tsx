@@ -44,21 +44,21 @@ class Home extends PureComponent<Props, State> {
     const producer = new Producer(client);
 
     client.on('ready', function() {
-      console.log('client ready');
+      console.info('client ready');
     });
 
     client.on('error', function(err) {
-      console.log(`client error: ${err}`);
+      console.error(`client error: ${err}`);
     });
     producer.on('ready', () => {
-      console.log('producer ready');
+      console.info('producer ready');
       this.setState({
         producer
       });
     });
 
     producer.on('error', err => {
-      console.log(err);
+      console.error(err);
       this.setState({
         loading: false,
         error: err
@@ -108,11 +108,10 @@ class Home extends PureComponent<Props, State> {
       payloads = [{ topic, messages: message.content }];
     } else {
       const root: Record<string, any> = await Protobuf.load(proto);
-      console.log(`${packageName}.${messageName}`);
       const protoMessage = root.lookupType(`${packageName}.${messageName}`);
       const errMsg = protoMessage.verify(message.content);
       if (errMsg) {
-        console.log(errMsg);
+        console.error(errMsg);
         this.setState({
           error: errMsg
         });
@@ -127,14 +126,11 @@ class Home extends PureComponent<Props, State> {
       loading: true
     });
 
-    console.log(payloads);
     producer.send(payloads, (err, data) => {
       this.setState({
         loading: false
       });
       console.log(err, data);
-      // producer.close();
-      // client.close();
     });
   };
 
@@ -193,9 +189,7 @@ class Home extends PureComponent<Props, State> {
                     mock[fi][typeMock] = mockValue;
                   }
                 }
-                // mock[fi] = subMock;
               });
-              //     console.log(msgName, subMock);
             }
           });
         } else {

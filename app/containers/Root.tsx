@@ -10,7 +10,7 @@ type Props = {
   history: History;
 };
 
-const Root = ({ store, history }: Props) => {
+const Root = ({ store }: Props) => {
   return (
     <Provider store={store}>
       <Home />
