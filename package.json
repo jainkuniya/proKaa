@@ -263,7 +263,6 @@
     "yarn": "^1.21.1"
   },
   "dependencies": {
-    "electron-devtools-installer": "^2.2.4",
     "@fortawesome/fontawesome-free": "^5.12.1",
     "@hot-loader/react-dom": "^16.12.0",
     "ace-builds": "^1.4.8",
@@ -271,10 +270,12 @@
     "core-js": "^3.6.4",
     "devtron": "^1.4.0",
     "electron-debug": "^3.0.1",
+    "electron-devtools-installer": "^2.2.4",
     "electron-log": "^4.0.6",
     "electron-store": "^5.1.1",
     "electron-updater": "^4.2.0",
     "history": "^4.10.1",
+    "protobufjs": "^6.9.0",
     "react": "^16.12.0",
     "react-ace": "^8.1.0",
     "react-dom": "^16.12.0",
