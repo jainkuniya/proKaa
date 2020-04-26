@@ -1,3 +1,66 @@
 .wrapper {
   margin: 8px;
+  color: grey;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.fileDetailsWrapper {
+  text-overflow: ellipsis;
+}
+
+.fileName {
+  padding: 8px;
+}
+
+.fileName::before {
+  content: 'F';
+  margin: 0 6px 0 0;
+  background-color: cornflowerblue;
+  color: white;
+  padding: 4px;
+  font-size: 10px;
+}
+
+.exapndIcon::before {
+  content: '▾';
+  margin: 0 6px 0 0;
+}
+
+.protoDataWrapper {
+  margin: 8px 0 0 16px;
+}
+
+.packageName {
+  padding: 8px;
+}
+
+.packageName::before {
+  content: 'P';
+  margin: 0 6px 0 0;
+  background-color: red;
+  color: white;
+  padding: 4px;
+  font-size: 10px;
+}
+
+.message {
+  padding: 4px 0 4px 40px;
+  cursor: pointer;
+}
+
+.message::before {
+  content: 'M';
+  margin: 0 6px 0 0;
+  background-color: green;
+  color: white;
+  padding: 4px;
+  font-size: 10px;
+}
+
+.message:focus {
+  outline: 0;
+}
+
+.message:hover {
+  background-color: rgb(235, 237, 238);
 }

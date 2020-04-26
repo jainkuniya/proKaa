@@ -23,35 +23,48 @@ export default class Proto extends PureComponent<Props, State> {
   render() {
     const { proto, onMessageItemSelect } = this.props;
 
+    const filePath = proto.filepath.split('/');
+    const fileName = filePath.pop();
+
     return (
       <div className={styles.wrapper}>
-        <span className={styles.packageName}>
-          {proto.filepath.split('/').pop()}
-        </span>
+        <div className={styles.fileDetailsWrapper}>
+          <span className={styles.exapndIcon} />
+          <span className={styles.fileName}>{fileName}</span>
+        </div>
         {Object.keys(proto.data).map(packageName => {
           return (
-            <div key={packageName}>
-              <p>{packageName}</p>
-              <ul>
-                {proto.data[packageName].messages.map(msg => (
-                  <li key={msg.name}>
-                    <button
-                      type="button"
-                      onClick={
-                        () =>
-                          onMessageItemSelect({
-                            ...msg,
-                            proto: proto.filepath,
-                            packageName
-                          })
-                        // eslint-disable-next-line react/jsx-curly-newline
-                      }
-                    >
-                      {msg.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            <div className={styles.protoDataWrapper} key={packageName}>
+              <span className={styles.exapndIcon} />
+              <span className={styles.packageName}>{packageName}</span>
+              {proto.data[packageName].messages.map((msg, index) => (
+                <div
+                  tabIndex={index}
+                  role="button"
+                  key={msg.name}
+                  className={styles.message}
+                  onKeyPress={
+                    () =>
+                      onMessageItemSelect({
+                        ...msg,
+                        proto: proto.filepath,
+                        packageName
+                      })
+                    // eslint-disable-next-line
+                  }
+                  onClick={
+                    () =>
+                      onMessageItemSelect({
+                        ...msg,
+                        proto: proto.filepath,
+                        packageName
+                      })
+                    // eslint-disable-next-line
+                  }
+                >
+                  {msg.name}
+                </div>
+              ))}
             </div>
           );
         })}
