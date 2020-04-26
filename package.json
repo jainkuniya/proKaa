@@ -103,42 +103,33 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/jainkuniya/proKaa/"
   },
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "Prokaa Maintainers",
+    "email": "jainkuniya@gmail.com",
+    "url": "https://github.com/jainkuniya/proKaa/"
   },
   "contributors": [
     {
-      "name": "Vikram Rangaraj",
-      "email": "vikr01@icloud.com",
-      "url": "https://github.com/vikr01"
-    },
-    {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
+      "name": "Vishwesh Jainkuniya",
+      "email": "jainkuniya@gmail.com",
+      "url": "https://github.com/jainkuniya"
     }
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/jainkuniya/proKaa/issues"
   },
   "keywords": [
-    "electron",
-    "boilerplate",
-    "react",
-    "redux",
-    "typescript",
-    "ts",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "app",
+    "proto",
+    "kafka",
+    "message",
+    "broker",
+    "parition"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/jainkuniya/proKaa#readme",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {
@@ -300,7 +291,7 @@
     "yarn": ">=0.21.3"
   },
   "collective": {
-    "url": "https://opencollective.com/electron-react-boilerplate-594"
+    "url": ""
   },
   "browserslist": [
     "extends browserslist-config-erb"
