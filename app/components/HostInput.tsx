@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import kafka from 'kafka-node';
 import ClipLoader from 'react-spinners/ClipLoader';
 
+import { Button } from '@material-ui/core';
 import styles from './Home.css';
 import { updateKafkaHostAction } from '../actions/appConfig';
 
@@ -75,6 +76,9 @@ class HostInput extends PureComponent<Props, State> {
   handleHostChange = (event: { target: { value: string }; key: string }) => {
     const { updateKafkaHost } = this.props;
     updateKafkaHost(event.target.value);
+    this.setState({
+      buttonText: 'Connect'
+    });
   };
 
   render() {
@@ -92,15 +96,20 @@ class HostInput extends PureComponent<Props, State> {
           }}
           disabled={loading}
         />
-        <button
+        <Button
           className={styles.connectButton}
           type="button"
           onClick={this.createProducer}
+          style={{
+            backgroundColor: '#E91E63',
+            color: '#fff',
+            marginLeft: '2px'
+          }}
           disabled={loading}
         >
           {!loading && <span>{buttonText}</span>}
           <ClipLoader size={20} color="#ffffff" loading={loading} />
-        </button>
+        </Button>
       </span>
     );
   }

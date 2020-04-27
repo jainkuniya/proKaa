@@ -265,6 +265,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.1",
     "@hot-loader/react-dom": "^16.12.0",
+    "@material-ui/core": "^4.9.11",
+    "@material-ui/icons": "^4.9.1",
     "ace-builds": "^1.4.8",
     "connected-react-router": "^6.6.1",
     "core-js": "^3.6.4",
@@ -275,6 +277,7 @@
     "electron-store": "^5.1.1",
     "electron-updater": "^4.2.0",
     "history": "^4.10.1",
+    "material-ui": "^0.20.2",
     "protobufjs": "^6.9.0",
     "react": "^16.12.0",
     "react-ace": "^8.1.0",

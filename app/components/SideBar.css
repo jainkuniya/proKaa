@@ -2,15 +2,17 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  border-style: solid;
-  border-color: black;
-  border-width: 1px;
 }
 
 .header {
+  position: sticky;
+  top: 0;
+}
+
+.headerTextWrapper {
   display: flex;
   justify-content: space-between;
-  background-color: black;
+  background-color: #263238;
   color: white;
   padding: 16px;
   align-items: center;
@@ -30,7 +32,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-  background-color: azure;
+  margin-right: 16px;
+  background-color: white;
 }
 
 .options {

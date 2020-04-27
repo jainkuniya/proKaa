@@ -1,14 +1,15 @@
 import React, { PureComponent } from 'react';
-import Switch from 'react-switch';
+import Switch from '@material-ui/core/Switch';
 import Protobuf from 'protobufjs';
 import { remote } from 'electron';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-
+import Button from '@material-ui/core/Button';
 import styles from './SideBar.css';
 import Proto from './Proto';
+
 import { toggleEnableProtoAction } from '../actions/appConfig';
-import { updateProtoPathsAction, cleanAction } from '../actions/appCache';
+import { cleanAction, updateProtoPathsAction } from '../actions/appCache';
 
 type Props = {
   isProtoEnabled: boolean;
@@ -97,10 +98,9 @@ class SideBar extends PureComponent<Props, State> {
     updateProtoPaths(updatedProtos);
   };
 
-  handleProtoEnableToggle = (checked: boolean) => {
+  handleProtoEnableToggle = (event: { target: { checked: boolean } }) => {
     const { handleEnableProtoToggleChange } = this.props;
-
-    handleEnableProtoToggleChange(checked);
+    handleEnableProtoToggleChange(event.target.checked);
   };
 
   clean = () => {
@@ -111,49 +111,66 @@ class SideBar extends PureComponent<Props, State> {
   render() {
     const { onMessageItemSelect, isProtoEnabled, protos } = this.props;
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.header}>
-          <span>Protos Messages</span>
-          <div className={styles.headerRightPanel}>
-            <Switch
-              onChange={this.handleProtoEnableToggle}
-              checked={isProtoEnabled}
-            />
+      <div>
+        <div className={styles.wrapper}>
+          <div className={styles.header}>
+            <div className={styles.headerTextWrapper}>
+              <span>Proto Messages</span>
+              <div className={styles.headerRightPanel}>
+                <Switch
+                  onChange={this.handleProtoEnableToggle}
+                  checked={isProtoEnabled}
+                />
+              </div>
+            </div>
+            {isProtoEnabled && (
+              <div className={styles.optionsPanel}>
+                {/* <Button
+                  color="default"
+                  type="button"
+                  style={{
+                    backgroundColor: '#FFB74D'
+                  }}
+                  onClick={this.reloadProtoFile}
+                >
+                  reload
+                </Button> */}
+                <Button
+                  color="inherit"
+                  type="button"
+                  onClick={this.clean}
+                  style={{
+                    marginLeft: '2px',
+                    marginRight: '2px',
+                    backgroundColor: '#FFB74D'
+                  }}
+                >
+                  clean
+                </Button>
+
+                <Button
+                  color="default"
+                  type="button"
+                  onClick={this.loadProtoFile}
+                  style={{
+                    color: '#fff',
+                    backgroundColor: '#E91E63'
+                  }}
+                >
+                  +
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
-        {isProtoEnabled && (
-          <div className={styles.optionsPanel}>
-            <button
-              className={styles.options}
-              type="button"
-              onClick={this.reloadProtoFile}
-            >
-              reload
-            </button>
-            <button
-              className={styles.options}
-              type="button"
-              onClick={this.clean}
-            >
-              clean
-            </button>
-            <button
-              className={styles.options}
-              type="button"
-              onClick={this.loadProtoFile}
-            >
-              +
-            </button>
+          <div className={styles.list}>
+            {Object.keys(protos).map(id => (
+              <Proto
+                key={id}
+                proto={protos[id]}
+                onMessageItemSelect={onMessageItemSelect}
+              />
+            ))}
           </div>
-        )}
-        <div className={styles.list}>
-          {Object.keys(protos).map(id => (
-            <Proto
-              key={id}
-              proto={protos[id]}
-              onMessageItemSelect={onMessageItemSelect}
-            />
-          ))}
         </div>
       </div>
     );

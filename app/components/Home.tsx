@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
+import Fab from '@material-ui/core/Fab';
+import ClipLoader from 'react-spinners/ClipLoader';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
-import ClipLoader from 'react-spinners/ClipLoader';
 import Protobuf from 'protobufjs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Producer } from 'kafka-node';
 import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
@@ -18,7 +20,7 @@ type State = {
   proto?: string;
   packageName?: string;
   messageName?: string;
-  producer?: any; // TODO fix it
+  producer?: Producer;
 };
 
 type Props = { isProtoEnabled: boolean };
@@ -34,8 +36,12 @@ class Home extends PureComponent<Props, State> {
     };
   }
 
-  updateProducer = (producer, error) => {
-    this.setState({ producer, error });
+  updateProducer = (newProducer: Producer, error) => {
+    const { producer } = this.state;
+    if (producer) {
+      producer.close();
+    }
+    this.setState({ producer: newProducer, error });
   };
 
   handleMessageChange = (event: { target: { value: string } }) => {
@@ -330,18 +336,20 @@ class Home extends PureComponent<Props, State> {
           <SideBar onMessageItemSelect={this.onMessageItemSelect} />
         </div>
         <div className={styles.rightPanel}>
-          <HostInput updateProducer={this.updateProducer} />
-          <span className={styles.inputRow}>
-            <span className={styles.label}>Topic:</span>
-            <input
-              value={topic}
-              className={styles.input}
-              placeholder="topic"
-              onChange={e => {
-                this.handleTopicChange(e);
-              }}
-            />
-          </span>
+          <div>
+            <HostInput updateProducer={this.updateProducer} />
+            <span className={styles.inputRow}>
+              <span className={styles.label}>Topic:</span>
+              <input
+                value={topic}
+                className={styles.topicInput}
+                placeholder="topic"
+                onChange={e => {
+                  this.handleTopicChange(e);
+                }}
+              />
+            </span>
+          </div>
           <div className={styles.messageContainer}>
             {!isProtoEnabled ? (
               <textarea
@@ -365,14 +373,27 @@ class Home extends PureComponent<Props, State> {
           {error && (
             <div className={styles.errorWrapper}>{JSON.stringify(error)}</div>
           )}
-          <button
+          <Fab
             className={styles.pushButton}
             type="button"
             onClick={this.sendMessage}
+            size="large"
+            style={{
+              margin: 0,
+              top: 'auto',
+              height: '70px',
+              width: '70px',
+              right: 20,
+              bottom: 20,
+              left: 'auto',
+              position: 'fixed',
+              color: '#fff',
+              backgroundColor: '#F50057'
+            }}
           >
             {!loading && <span>Push</span>}
             <ClipLoader size={20} color="#ffffff" loading={loading} />
-          </button>
+          </Fab>
         </div>
       </div>
     );
