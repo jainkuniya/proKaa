@@ -10,7 +10,7 @@
 .header {
   display: flex;
   justify-content: space-between;
-  background-color: black;
+  background-color: #263238;
   color: white;
   padding: 16px;
   align-items: center;

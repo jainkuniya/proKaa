@@ -56,12 +56,13 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
+    width: 1306,
     height: 728,
     webPreferences: {
       nodeIntegration: true
     }
   });
+
 
   mainWindow.loadURL(`file://${__dirname}/app.html`);
 

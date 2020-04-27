@@ -5,10 +5,10 @@ import ReactJson from 'react-json-view';
 import ClipLoader from 'react-spinners/ClipLoader';
 import Protobuf from 'protobufjs';
 import { v4 as uuidv4 } from 'uuid';
-
 import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
+import Fab from "@material-ui/core/Fab";
 
 type State = {
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
@@ -330,6 +330,7 @@ class Home extends PureComponent<Props, State> {
           <SideBar onMessageItemSelect={this.onMessageItemSelect} />
         </div>
         <div className={styles.rightPanel}>
+          <div>
           <HostInput updateProducer={this.updateProducer} />
           <span className={styles.inputRow}>
             <span className={styles.label}>Topic:</span>
@@ -342,6 +343,7 @@ class Home extends PureComponent<Props, State> {
               }}
             />
           </span>
+          </div>
           <div className={styles.messageContainer}>
             {!isProtoEnabled ? (
               <textarea
@@ -365,14 +367,28 @@ class Home extends PureComponent<Props, State> {
           {error && (
             <div className={styles.errorWrapper}>{JSON.stringify(error)}</div>
           )}
-          <button
+          <Fab
             className={styles.pushButton}
             type="button"
+
             onClick={this.sendMessage}
+            size="large"
+            style={{
+              margin: 0,
+              top: 'auto',
+              height: "70px",
+              width: "70px",
+              right: 20,
+              bottom: 20,
+              left: 'auto',
+              position: 'fixed',
+              color: "#fff",
+              backgroundColor: "#F50057",
+            }}
           >
             {!loading && <span>Push</span>}
             <ClipLoader size={20} color="#ffffff" loading={loading} />
-          </button>
+          </Fab>
         </div>
       </div>
     );

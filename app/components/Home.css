@@ -2,41 +2,39 @@
   display: flex;
   flex: 1;
   flex-direction: row;
-  height: 98vh;
+  height: 99vh;
 }
 
 .inputRow {
   display: flex;
   flex-direction: row;
+  padding: 4px 0 0 0;
 }
 
 .label {
   padding: 8px;
-  background-color: black;
+  background-color: #263238;
   color: white;
-  flex: 3;
+  width: 100px!important;
+  height: 20px!important;
 }
 
 .sideBar {
-  display: flex;
-  flex: 2;
-  margin: 1vh;
+  width: 220px;
 }
 
 .rightPanel {
   display: flex;
   flex-direction: column;
-  flex: 8;
-  border-style: solid;
-  border-color: black;
-  border-width: 1px;
-  margin: 1vh;
+  flex: 1;
+  margin-top: -1vh;
 }
 
 .input {
   padding: 4px;
   font-size: 16px;
   flex: 17;
+  height: 24px!important;
 }
 
 .messageContainer {
@@ -61,6 +59,8 @@
   align-items: center;
   display: flex;
   justify-content: center;
+  margin: 4px;
+
 }
 
 .connectButton {
@@ -76,10 +76,13 @@
 
 .errorWrapper {
   margin-top: 8px;
-  color: red;
   padding: 8px;
   border-top-style: solid;
   border-top-color: black;
+  color: white;
+  background-color: #b71c1c;
+
+  font: 1rem Inconsolata, monospace;
   border-top-width: 1px;
 }
 
