@@ -14,11 +14,8 @@ labels: 'bug'
 
 - [ ] Using yarn
 - [ ] Using node 10.x
-- [ ] Using an up-to-date [`master` branch](https://github.com/electron-react-boilerplate/electron-react-boilerplate/tree/master)
-- [ ] Using latest version of devtools. See [wiki for howto update](https://github.com/electron-react-boilerplate/electron-react-boilerplate/wiki/DevTools)
+- [ ] Using an up-to-date [`master` branch](https://github.com/jainkuniya/proKaa/tree/master)
 - [ ] Link to stacktrace in a Gist (for bugs)
-- [ ] For issue in production release, devtools output of `DEBUG_PROD=true yarn build && yarn start`
-- [ ] Tried solutions mentioned in [#400](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/400)
 
 ## Expected Behavior
 
@@ -61,4 +58,3 @@ labels: 'bug'
 - Node version :
 - Version or Branch used :
 - Operating System and version :
-- Link to your project :
