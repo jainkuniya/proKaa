@@ -107,117 +107,7 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  getCustomMessageMock = (
-    fieldName: string,
-    type: string,
-    filepath: string,
-    packageName: string
-  ) => {
-    const { protos } = this.props;
-    const mock = {};
-    Object.keys(protos).forEach(key => {
-      if (protos[key].filepath === filepath) {
-        console.log('found message in same filepath');
-        if (type.includes('.')) {
-          console.log('found message with another package');
-          const split = type.split('.');
-          const msgName = split.pop();
-          const newPackageName = `${split.join('.')}`;
-          Object.keys(protos[key].data[newPackageName].messages).forEach(k => {
-            const msg = protos[key].data[newPackageName].messages[k];
-
-            if (msg.name === msgName) {
-              Object.keys(msg.fields).forEach(fi => {
-                const mockValue = this.getValueOfType(
-                  msg.fields[fi].type,
-                  fi,
-                  filepath,
-                  newPackageName
-                );
-                console.log(fi, mockValue);
-                if (msg.fields[fi].rule === 'repeated') {
-                  mock[fi] = [mockValue];
-                  if (msg.fields[fi].keyType) {
-                    // map
-                    const typeMock = this.getValueOfType(
-                      msg.fields[fi].keyType,
-                      fi,
-                      filepath,
-                      newPackageName
-                    );
-                    mock[fi] = {};
-                    mock[fi][typeMock] = mockValue;
-                  }
-                } else {
-                  mock[fi] = mockValue;
-                  if (msg.fields[fi].keyType) {
-                    // map
-                    const typeMock = this.getValueOfType(
-                      msg.fields[fi].keyType,
-                      fi,
-                      filepath,
-                      newPackageName
-                    );
-                    mock[fi] = {};
-                    mock[fi][typeMock] = mockValue;
-                  }
-                }
-              });
-            }
-          });
-        } else {
-          Object.keys(protos[key].data[packageName].messages).forEach(k => {
-            const msg = protos[key].data[packageName].messages[k];
-            if (msg.name === type) {
-              Object.keys(msg.fields).forEach(fi => {
-                const mockValue = this.getValueOfType(
-                  msg.fields[fi].type,
-                  fi,
-                  filepath,
-                  packageName
-                );
-                if (msg.fields[fi].rule === 'repeated') {
-                  mock[fi] = [mockValue];
-                  if (msg.fields[fi].keyType) {
-                    // map
-                    const typeMock = this.getValueOfType(
-                      msg.fields[fi].keyType,
-                      fi,
-                      filepath,
-                      newPackageName
-                    );
-                    mock[fi] = {};
-                    mock[fi][typeMock] = mockValue;
-                  }
-                } else {
-                  mock[fi] = mockValue;
-                  if (msg.fields[fi].keyType) {
-                    // map
-                    const typeMock = this.getValueOfType(
-                      msg.fields[fi].keyType,
-                      fi,
-                      filepath,
-                      newPackageName
-                    );
-                    mock[fi] = {};
-                    mock[fi][typeMock] = mockValue;
-                  }
-                }
-              });
-            }
-          });
-        }
-      }
-    });
-    return Object.keys(mock).length === 0 ? 0 : mock;
-  };
-
-  getValueOfType = (
-    type: string,
-    fieldName: string,
-    filepath: string,
-    packageName: string
-  ) => {
+  getMockValue = (fieldName: string, type: string) => {
     switch (type) {
       case 'string': {
         const fieldNameLower = fieldName.toLowerCase();
@@ -258,74 +148,122 @@ class Home extends PureComponent<Props, State> {
         return 1.1;
       case 'bytes':
         return Buffer.from('Hello');
-      default: {
-        const mock = this.getCustomMessageMock(
-          fieldName,
-          type,
-          filepath,
-          packageName
-        );
-        return Object.keys(mock) === 0 ? 0 : mock;
-      }
+      default:
+        return undefined;
     }
+  };
+
+  getMsgFields = (msgName, packageName, data) => {
+    let currentData = data;
+    packageName.forEach(subPkg => {
+      currentData = currentData.find(item => item.packageName === subPkg)
+        .messages;
+    });
+    return currentData.find(item => item.name === msgName).fields;
+  };
+
+  generateMockObj = (msgName, packageName, data) => {
+    const obj = {};
+    const pkg = packageName.split('.').filter(str => str);
+
+    const fields = this.getMsgFields(msgName, pkg, data);
+
+    if (!fields) {
+      // enum
+      return 0;
+    }
+
+    Object.keys(fields).forEach(fieldName => {
+      const field = fields[fieldName];
+      const mockValue = this.generateMockValue(
+        fieldName,
+        field.type,
+        data,
+        packageName
+      );
+
+      if (field.rule === 'repeated') {
+        obj[fieldName] = [mockValue];
+
+        if (field.keyType) {
+          // map
+          const typeMock = this.generateMockValue(
+            '',
+            field.keyType,
+            data,
+            packageName
+          );
+          obj[fieldName] = [{ [typeMock]: mockValue }];
+          // obj[fieldName][typeMock] = mockValue;
+        }
+      } else {
+        obj[fieldName] = mockValue;
+        if (field.keyType) {
+          // map
+          const typeMock = this.generateMockValue(
+            '',
+            field.keyType,
+            data,
+            packageName
+          );
+          obj[fieldName] = {};
+          obj[fieldName][typeMock] = mockValue;
+        }
+      }
+    });
+    return obj;
   };
 
   onMessageItemSelect = (msg: {
     name: string;
-    fields: Record<string, any>;
-    proto: string;
+    fileName: string;
     packageName: string;
   }) => {
     this.setState({
       error: ''
     });
-    const obj = {};
-    console.log(msg);
-    Object.keys(msg.fields).forEach(fieldName => {
-      const mock = this.getValueOfType(
-        msg.fields[fieldName].type,
-        fieldName,
-        msg.proto,
-        msg.packageName
-      );
-      if (msg.fields[fieldName].rule === 'repeated') {
-        obj[fieldName] = [mock];
 
-        if (msg.fields[fieldName].keyType) {
-          // map
-          const typeMock = this.getValueOfType(
-            msg.fields[fieldName].keyType,
-            fieldName,
-            msg.proto,
-            msg.packageName
-          );
-          obj[fieldName] = {};
-          obj[fieldName][typeMock] = mock;
-        }
-      } else {
-        obj[fieldName] = mock;
-
-        if (msg.fields[fieldName].keyType) {
-          // map
-          const typeMock = this.getValueOfType(
-            msg.fields[fieldName].keyType,
-            fieldName,
-            msg.proto,
-            msg.packageName
-          );
-          obj[fieldName] = {};
-          obj[fieldName][typeMock] = mock;
-        }
+    const { protos } = this.props;
+    Object.keys(protos).forEach(item => {
+      if (protos[item].filepath === msg.fileName) {
+        const mockValue = this.generateMockObj(
+          msg.name,
+          msg.packageName,
+          protos[item].data
+        );
+        this.setState({
+          message: { type: 'object', content: mockValue },
+          messageName: msg.name,
+          proto: msg.fileName,
+          packageName: msg.packageName
+        });
       }
     });
-    console.log(JSON.stringify(obj, null, 2));
-    this.setState({
-      message: { type: 'object', content: obj },
-      messageName: msg.name,
-      proto: msg.proto,
-      packageName: msg.packageName
-    });
   };
+
+  private generateMockValue(
+    fieldName: string,
+    fieldType: string,
+    data: any,
+    packageName: any
+  ) {
+    let mockValue = this.getMockValue(fieldName, fieldType);
+    if (!mockValue) {
+      if (fieldType.includes('.')) {
+        const customMsg = fieldType.split('.');
+        const customMsgName = customMsg.pop();
+        const customMsgPackageName = customMsg.join('.');
+        mockValue = this.generateMockObj(
+          customMsgName,
+          customMsgPackageName,
+          data
+        );
+      } else {
+        mockValue = this.generateMockObj(fieldType, packageName, data);
+      }
+    }
+    return mockValue;
+  }
 
   render() {
     const { message, topic, loading, error } = this.state;

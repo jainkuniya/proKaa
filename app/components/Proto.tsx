@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import styles from './Proto.css';
+import styles, { packageName } from './Proto.css';
 
 type Item = {
   name: string;
@@ -13,13 +13,63 @@ type Props = {
   proto: { filepath: string; messages: Record<string, any>[] };
   onMessageItemSelect: (msg: {
     name: string;
-    fields: Record<string, any>;
-    proto: string;
+    fileName: string;
     packageName: string;
   }) => void;
 };
 
 export default class Proto extends PureComponent<Props, State> {
+  renderMessageList = (data, pkgName?: string) => {
+    const { proto, onMessageItemSelect } = this.props;
+    // console.log(data);
+    return data.map(item => {
+      if (item.valuesById) {
+        // enum
+        return null;
+      }
+      if (item.packageName) {
+        return (
+          <div className={styles.protoDataWrapper} key={item.packageName}>
+            <span className={styles.exapndIcon} />
+            <span className={styles.packageName}>{item.packageName}</span>
+            {this.renderMessageList(
+              item.messages,
+              `${pkgName}.${item.packageName}`
+            )}
+          </div>
+        );
+      }
+      return (
+        <div
+          tabIndex={item.name}
+          role="button"
+          key={item.name}
+          className={styles.message}
+          onKeyPress={
+            () =>
+              onMessageItemSelect({
+                name: item.name,
+                fileName: proto.filepath,
+                packageName: pkgName
+              })
+            // eslint-disable-next-line
+                }
+          onClick={
+            () =>
+              onMessageItemSelect({
+                name: item.name,
+                fileName: proto.filepath,
+                packageName: pkgName
+              })
+            // eslint-disable-next-line
+                }
+        >
+          {item.name}
+        </div>
+      );
+    });
+  };
+
   render() {
     const { proto, onMessageItemSelect } = this.props;
 
@@ -32,42 +82,7 @@ export default class Proto extends PureComponent<Props, State> {
           <span className={styles.exapndIcon} />
           <span className={styles.fileName}>{fileName}</span>
         </div>
-        {Object.keys(proto.data).map(packageName => {
-          return (
-            <div className={styles.protoDataWrapper} key={packageName}>
-              <span className={styles.exapndIcon} />
-              <span className={styles.packageName}>{packageName}</span>
-              {proto.data[packageName].messages.map((msg, index) => (
-                <div
-                  tabIndex={index}
-                  role="button"
-                  key={msg.name}
-                  className={styles.message}
-                  onKeyPress={
-                    () =>
-                      onMessageItemSelect({
-                        ...msg,
-                        proto: proto.filepath,
-                        packageName
-                      })
-                    // eslint-disable-next-line
-                  }
-                  onClick={
-                    () =>
-                      onMessageItemSelect({
-                        ...msg,
-                        proto: proto.filepath,
-                        packageName
-                      })
-                    // eslint-disable-next-line
-                  }
-                >
-                  {msg.name}
-                </div>
-              ))}
-            </div>
-          );
-        })}
+        {this.renderMessageList(proto.data, '')}
       </div>
     );
   }

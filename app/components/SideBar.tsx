@@ -1,6 +1,7 @@
+/* eslint-disable max-classes-per-file */
 import React, { PureComponent } from 'react';
 import Switch from '@material-ui/core/Switch';
-import Protobuf from 'protobufjs';
+import Protobuf, { Root, Namespace, Type, Enum } from 'protobufjs';
 import { remote } from 'electron';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
@@ -22,54 +23,45 @@ type Props = {
   }) => void;
 };
 
-const findMessages = (tree, packageName?: string) => {
-  const subPackages = Object.keys(tree.nested);
-  let data = {};
-  for (let i = 0; i < subPackages.length; i += 1) {
-    const subPackageName = subPackages[i];
-    if (!tree.nested[subPackageName].nested) {
-      const messages = Object.keys(tree.nested);
-      let nestesMessages = [];
-      messages.forEach(k => {
-        if (tree.nested[k].nested) {
-          const temp = findMessages(tree.nested[k], packageName);
-          Object.keys(temp).forEach(it => {
-            nestesMessages = [...nestesMessages, ...temp[it].messages];
-          });
-        }
-      });
-      return {
-        [packageName]: {
-          packageName,
-          messages: [
-            ...nestesMessages,
-            ...messages
-              .filter(msgName => tree.nested[msgName].fields)
-              .map(msgName => ({
-                name: msgName,
-                fields: tree.nested[msgName].fields
-              }))
-          ]
-        }
-      };
-    }
-    let str = '';
-    if (packageName) {
-      str = `${packageName}.`;
-    }
-    data = {
-      ...data,
-      ...findMessages(tree.nested[subPackageName], `${str}${subPackageName}`)
-    };
+const findMessagesV2 = (tree: Root | Protobuf.ReflectionObject) => {
+  if (tree instanceof Root) {
+    let packages = [];
+    Object.keys(tree.nestedArray).forEach((index: string) => {
+      packages = [
+        ...packages,
+        ...findMessagesV2(tree.nestedArray[parseInt(index, 10)])
+      ];
+    });
+    return packages;
   }
-  return data;
+  if (tree instanceof Type) {
+    let messages = [];
+    // look for nested messages
+    Object.keys(tree.nestedArray).forEach((index: string) => {
+      messages = [
+        ...messages,
+        ...findMessagesV2(tree.nestedArray[parseInt(index, 10)])
+      ];
+    });
+    return [...messages, { name: tree.name, fields: tree.fields }];
+  }
+  if (tree instanceof Namespace) {
+    let messages = [];
+    Object.keys(tree.nestedArray).forEach((index: string) => {
+      const newLocal = findMessagesV2(tree.nestedArray[parseInt(index, 10)]);
+      messages = [...messages, ...newLocal];
+    });
+    return [{ packageName: tree.name, messages }];
+  }
+  if (tree instanceof Enum) {
+    return [{ name: tree.name, valuesById: tree.valuesById }];
+  }
+  return null;
 };
 
 const decodeProtoFile = async (path: string) => {
-  const root: Record<string, any> = await Protobuf.load(path);
-  console.log(root);
-  console.log(JSON.stringify(root));
-  return findMessages(root);
+  const root: Root = await Protobuf.load(path);
+  return findMessagesV2(root);
 };
 
 class SideBar extends PureComponent<Props, State> {
