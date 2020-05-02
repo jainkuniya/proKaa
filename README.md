@@ -1,4 +1,5 @@
 # Prokaa
+![proka](https://user-images.githubusercontent.com/14369357/80859251-c8262d80-8c7c-11ea-8cb2-1e3cef07a802.png)
 
 The missing GUI Client for publishing messages to **Kafka**. 🌸
 
