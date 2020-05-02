@@ -80,7 +80,7 @@ const configureStore = () => {
   const store = createStore(persistedReducer, {}, enhancer);
 
   const persister = persistStore(store);
-  // persister.purge();
+  persister.purge();
 
   if (module.hot) {
     module.hot.accept(

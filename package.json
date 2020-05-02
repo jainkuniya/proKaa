@@ -263,6 +263,7 @@
     "yarn": "^1.21.1"
   },
   "dependencies": {
+    "@babel/helper-validator-identifier": "^7.9.5",
     "@fortawesome/fontawesome-free": "^5.12.1",
     "@hot-loader/react-dom": "^16.12.0",
     "@material-ui/core": "^4.9.11",
