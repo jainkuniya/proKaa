@@ -1,4 +1,5 @@
 # Prokaa
+
 ![proka](https://user-images.githubusercontent.com/14369357/80859251-c8262d80-8c7c-11ea-8cb2-1e3cef07a802.png)
 
 The missing GUI Client for publishing messages to **Kafka**. 🌸
@@ -34,6 +35,8 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 ```bash
 yarn dev
 ```
+
+![prokaa-example](https://user-images.githubusercontent.com/18511177/80861361-bbf59c80-8c8b-11ea-8999-9fe1093228cf.png)
 
 ### Packaging
 
