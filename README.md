@@ -48,4 +48,4 @@ yarn package
 
 ## License
 
-MIT © [Prokaa](https://github.com/jainkuniya/proKaa/)
+[Apache License 2.0](https://github.com/jainkuniya/proKaa/)
