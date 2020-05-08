@@ -24,9 +24,22 @@ type Props = {
   }) => void;
 };
 
-const decodeProtoFile = async (path: string) => {
-  const root: Root = await Protobuf.load(path);
-  return findMessagesInProto(root);
+const decodeProtoFile = async (filePath: string) => {
+  try {
+    const root: Root = await Protobuf.load(filePath);
+    return findMessagesInProto(root);
+  } catch (e) {
+    const { dialog } = remote;
+    dialog.showMessageBox({
+      type: 'error',
+      buttons: ['Cancel'],
+      defaultId: 1,
+      cancelId: 0,
+      title: 'Error loading proto file',
+      message: e.toString()
+    });
+  }
+  return null;
 };
 
 class SideBar extends PureComponent<Props, State> {
@@ -42,17 +55,20 @@ class SideBar extends PureComponent<Props, State> {
     for (let i = 0; i < result.filePaths.length; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       const data = await decodeProtoFile(result.filePaths[i]);
-      updatedProtos = [
-        ...updatedProtos,
-        {
-          filepath: result.filePaths[i],
-          data
-        }
-      ];
+      if (data) {
+        updatedProtos = [
+          ...updatedProtos,
+          {
+            filepath: result.filePaths[i],
+            data
+          }
+        ];
+      }
     }
-
-    const { updateProtoPaths } = this.props;
-    updateProtoPaths(updatedProtos);
+    if (updatedProtos.length > 0) {
+      const { updateProtoPaths } = this.props;
+      updateProtoPaths(updatedProtos);
+    }
   };
 
   handleProtoEnableToggle = (event: { target: { checked: boolean } }) => {
