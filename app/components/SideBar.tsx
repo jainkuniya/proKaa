@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import React, { PureComponent } from 'react';
 import Switch from '@material-ui/core/Switch';
-import Protobuf, { Root, Namespace, Type, Enum } from 'protobufjs';
+import Protobuf, { Root } from 'protobufjs';
 import { remote } from 'electron';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
@@ -11,6 +11,7 @@ import Proto from './Proto';
 
 import { toggleEnableProtoAction } from '../actions/appConfig';
 import { cleanAction, updateProtoPathsAction } from '../actions/appCache';
+import findMessagesInProto from '../parser/parseProto';
 
 type Props = {
   isProtoEnabled: boolean;
@@ -23,45 +24,9 @@ type Props = {
   }) => void;
 };
 
-const findMessagesV2 = (tree: Root | Protobuf.ReflectionObject) => {
-  if (tree instanceof Root) {
-    let packages = [];
-    Object.keys(tree.nestedArray).forEach((index: string) => {
-      packages = [
-        ...packages,
-        ...findMessagesV2(tree.nestedArray[parseInt(index, 10)])
-      ];
-    });
-    return packages;
-  }
-  if (tree instanceof Type) {
-    let messages = [];
-    // look for nested messages
-    Object.keys(tree.nestedArray).forEach((index: string) => {
-      messages = [
-        ...messages,
-        ...findMessagesV2(tree.nestedArray[parseInt(index, 10)])
-      ];
-    });
-    return [...messages, { name: tree.name, fields: tree.fields }];
-  }
-  if (tree instanceof Namespace) {
-    let messages = [];
-    Object.keys(tree.nestedArray).forEach((index: string) => {
-      const newLocal = findMessagesV2(tree.nestedArray[parseInt(index, 10)]);
-      messages = [...messages, ...newLocal];
-    });
-    return [{ packageName: tree.name, messages }];
-  }
-  if (tree instanceof Enum) {
-    return [{ name: tree.name, valuesById: tree.valuesById }];
-  }
-  return null;
-};
-
 const decodeProtoFile = async (path: string) => {
   const root: Root = await Protobuf.load(path);
-  return findMessagesV2(root);
+  return findMessagesInProto(root);
 };
 
 class SideBar extends PureComponent<Props, State> {

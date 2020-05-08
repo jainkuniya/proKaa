@@ -11,6 +11,7 @@ import { Producer } from 'kafka-node';
 import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
+import generateMockData from '../mock/generateMockData';
 
 type State = {
   message: { type: 'string' | 'object'; content: string | Record<string, any> };
@@ -107,113 +108,6 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  getMockValue = (fieldName: string, type: string) => {
-    switch (type) {
-      case 'string': {
-        const fieldNameLower = fieldName.toLowerCase();
-
-        if (fieldNameLower.startsWith('id') || fieldNameLower.endsWith('id')) {
-          return uuidv4();
-        }
-
-        return 'Hello';
-      }
-      case 'number':
-        return 10;
-      case 'bool':
-        return true;
-      case 'int32':
-        return 10;
-      case 'int64':
-        return 20;
-      case 'uint32':
-        return 100;
-      case 'uint64':
-        return 100;
-      case 'sint32':
-        return 100;
-      case 'sint64':
-        return 1200;
-      case 'fixed32':
-        return 1400;
-      case 'fixed64':
-        return 1500;
-      case 'sfixed32':
-        return 1600;
-      case 'sfixed64':
-        return 1700;
-      case 'double':
-        return 1.4;
-      case 'float':
-        return 1.1;
-      case 'bytes':
-        return Buffer.from('Hello');
-      default:
-        return undefined;
-    }
-  };
-
-  getMsgFields = (msgName, packageName, data) => {
-    let currentData = data;
-    packageName.forEach(subPkg => {
-      currentData = currentData.find(item => item.packageName === subPkg)
-        .messages;
-    });
-    return currentData.find(item => item.name === msgName).fields;
-  };
-
-  generateMockObj = (msgName, packageName, data) => {
-    const obj = {};
-    const pkg = packageName.split('.').filter(str => str);
-
-    const fields = this.getMsgFields(msgName, pkg, data);
-
-    if (!fields) {
-      // enum
-      return 0;
-    }
-
-    Object.keys(fields).forEach(fieldName => {
-      const field = fields[fieldName];
-      const mockValue = this.generateMockValue(
-        fieldName,
-        field.type,
-        data,
-        packageName
-      );
-
-      if (field.rule === 'repeated') {
-        obj[fieldName] = [mockValue];
-
-        if (field.keyType) {
-          // map
-          const typeMock = this.generateMockValue(
-            '',
-            field.keyType,
-            data,
-            packageName
-          );
-          obj[fieldName] = [{ [typeMock]: mockValue }];
-          // obj[fieldName][typeMock] = mockValue;
-        }
-      } else {
-        obj[fieldName] = mockValue;
-        if (field.keyType) {
-          // map
-          const typeMock = this.generateMockValue(
-            '',
-            field.keyType,
-            data,
-            packageName
-          );
-          obj[fieldName] = {};
-          obj[fieldName][typeMock] = mockValue;
-        }
-      }
-    });
-    return obj;
-  };
-
   onMessageItemSelect = (msg: {
     name: string;
     fileName: string;
@@ -226,7 +120,7 @@ class Home extends PureComponent<Props, State> {
     const { protos } = this.props;
     Object.keys(protos).forEach(item => {
       if (protos[item].filepath === msg.fileName) {
-        const mockValue = this.generateMockObj(
+        const mockValue = generateMockData(
           msg.name,
           msg.packageName,
           protos[item].data
@@ -240,30 +134,6 @@ class Home extends PureComponent<Props, State> {
       }
     });
   };
-
-  private generateMockValue(
-    fieldName: string,
-    fieldType: string,
-    data: any,
-    packageName: any
-  ) {
-    let mockValue = this.getMockValue(fieldName, fieldType);
-    if (!mockValue) {
-      if (fieldType.includes('.')) {
-        const customMsg = fieldType.split('.');
-        const customMsgName = customMsg.pop();
-        const customMsgPackageName = customMsg.join('.');
-        mockValue = this.generateMockObj(
-          customMsgName,
-          customMsgPackageName,
-          data
-        );
-      } else {
-        mockValue = this.generateMockObj(fieldType, packageName, data);
-      }
-    }
-    return mockValue;
-  }
 
   render() {
     const { message, topic, loading, error } = this.state;
