@@ -1,12 +1,13 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-import kafka from 'kafka-node';
+import { KafkaClient, Producer } from 'kafka-node';
 import ClipLoader from 'react-spinners/ClipLoader';
 
 import { Button } from '@material-ui/core';
 import styles from './Home.css';
 import { updateKafkaHostAction } from '../actions/appConfig';
+import { GlobalState } from '../reducers/types';
 
 type State = {
   loading: boolean;
@@ -14,11 +15,8 @@ type State = {
 };
 
 type Props = {
-  kafkaHost: string;
-  updateProducer: (
-    producer?: Record<string, any>,
-    error?: Record<string, any>
-  ) => void;
+  kafkaHost?: string;
+  updateProducer: (producer?: Producer, error?: string) => void;
   updateKafkaHost: (kafkaHost: string) => void;
 };
 
@@ -37,14 +35,13 @@ class HostInput extends PureComponent<Props, State> {
 
   createProducer = () => {
     const { kafkaHost } = this.props;
-    const { Producer } = kafka;
     const { updateProducer } = this.props;
     updateProducer(undefined, undefined);
     this.setState({
       loading: true
     });
     try {
-      const client = new kafka.KafkaClient({
+      const client = new KafkaClient({
         kafkaHost
       });
       const producer = new Producer(client);
@@ -73,7 +70,7 @@ class HostInput extends PureComponent<Props, State> {
     }
   };
 
-  handleHostChange = (event: { target: { value: string }; key: string }) => {
+  handleHostChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { updateKafkaHost } = this.props;
     updateKafkaHost(event.target.value);
     this.setState({
@@ -115,7 +112,7 @@ class HostInput extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: GlobalState) {
   return {
     kafkaHost: state.appConfig.kafkaHost
   };

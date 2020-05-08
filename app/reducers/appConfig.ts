@@ -1,11 +1,10 @@
-import { Action } from 'redux';
+import { TOGGLE_PROTO_ENABLED, UPDATE_KAFKA_HOST } from './actionTypes';
+import { ActionToggleProtoEnabled, ActionUpdateKafkaHost } from './types';
 
-import { TOGGLE_PROTO_ENABLED, UPDATE_KAFKA_HOST } from '../actions/appConfig';
-
-export default function counter(
+export default (
   state = { protoEnabled: false },
-  action: Action<string>
-) {
+  action: ActionToggleProtoEnabled | ActionUpdateKafkaHost
+) => {
   switch (action.type) {
     case TOGGLE_PROTO_ENABLED:
       return { ...state, protoEnabled: action.enabled };
@@ -14,4 +13,4 @@ export default function counter(
     default:
       return state;
   }
-}
+};

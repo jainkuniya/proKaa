@@ -1,27 +1,23 @@
 import React, { PureComponent } from 'react';
 
-import styles, { packageName } from './Proto.css';
-
-type Item = {
-  name: string;
-  messages: { name: string; fields: any };
-};
-
-type State = {};
+import styles from './Proto.css';
+import { ProtoFile, ProtoData, ProtoMessage } from '../reducers/types';
 
 type Props = {
-  proto: { filepath: string; messages: Record<string, any>[] };
-  onMessageItemSelect: (msg: {
-    name: string;
-    fileName: string;
-    packageName: string;
-  }) => void;
+  proto: ProtoFile;
+  onMessageItemSelect: (
+    messageName: string,
+    fileName: string,
+    packageName: string
+  ) => void;
 };
 
-export default class Proto extends PureComponent<Props, State> {
-  renderMessageList = (data, pkgName?: string) => {
+export default class Proto extends PureComponent<Props> {
+  renderMessageList = (
+    data: ProtoData[] | ProtoMessage[],
+    pkgName?: string
+  ) => {
     const { proto, onMessageItemSelect } = this.props;
-    // console.log(data);
     return data.map(item => {
       if (item.valuesById) {
         // enum
@@ -39,6 +35,10 @@ export default class Proto extends PureComponent<Props, State> {
           </div>
         );
       }
+      if (!pkgName) {
+        // there can not be a message without pkgName
+        return null;
+      }
       return (
         <div
           tabIndex={item.name}
@@ -46,23 +46,13 @@ export default class Proto extends PureComponent<Props, State> {
           key={item.name}
           className={styles.message}
           onKeyPress={
-            () =>
-              onMessageItemSelect({
-                name: item.name,
-                fileName: proto.filepath,
-                packageName: pkgName
-              })
-            // eslint-disable-next-line
-                }
+            () => onMessageItemSelect(item.name, proto.filepath, pkgName)
+            // eslint-disable-next-line react/jsx-curly-newline
+          }
           onClick={
-            () =>
-              onMessageItemSelect({
-                name: item.name,
-                fileName: proto.filepath,
-                packageName: pkgName
-              })
-            // eslint-disable-next-line
-                }
+            () => onMessageItemSelect(item.name, proto.filepath, pkgName)
+            // eslint-disable-next-line react/jsx-curly-newline
+          }
         >
           {item.name}
         </div>
@@ -71,7 +61,7 @@ export default class Proto extends PureComponent<Props, State> {
   };
 
   render() {
-    const { proto, onMessageItemSelect } = this.props;
+    const { proto } = this.props;
 
     const filePath = proto.filepath.split('/');
     const fileName = filePath.pop();

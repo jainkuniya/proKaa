@@ -4,17 +4,22 @@ import ClipLoader from 'react-spinners/ClipLoader';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
-import Protobuf from 'protobufjs';
 import { v4 as uuidv4 } from 'uuid';
-
 import { Producer } from 'kafka-node';
+
 import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
 import generateMockData from '../mock/generateMockData';
+import publishMessage from '../publishMessage';
+import { GlobalState } from '../reducers/types';
 
 type State = {
-  message: { type: 'string' | 'object'; content: string | Record<string, any> };
+  message: {
+    type: 'string' | 'object';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    content: string | { [k: string]: any };
+  };
   topic: string;
   loading: boolean;
   error?: string;
@@ -37,7 +42,7 @@ class Home extends PureComponent<Props, State> {
     };
   }
 
-  updateProducer = (newProducer: Producer, error) => {
+  updateProducer = (newProducer?: Producer, error?: string) => {
     const { producer } = this.state;
     if (producer) {
       producer.close();
@@ -51,7 +56,8 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  onMessageEdit = edit => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onMessageEdit = (edit: { updated_src: any }) => {
     this.setState({
       message: { type: 'object', content: edit.updated_src }
     });
@@ -64,79 +70,51 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
-    const { producer } = this.state;
-    if (!producer) {
-      this.setState({
-        error: 'please connect to the producer'
-      });
-
-      return;
-    }
+    const {
+      producer,
+      message,
+      messageName,
+      topic,
+      proto,
+      packageName
+    } = this.state;
     const { isProtoEnabled } = this.props;
-    this.setState({
-      error: ''
-    });
-    const { message, messageName, topic, proto, packageName } = this.state;
-
-    let payloads;
-    if (!isProtoEnabled) {
-      payloads = [{ topic, messages: message.content }];
-    } else {
-      if (!messageName) {
-        this.setState({
-          error: 'please select message'
-        });
-        return;
-      }
-      const root: Record<string, any> = await Protobuf.load(proto);
-      const protoMessage = root.lookupType(`${packageName}.${messageName}`);
-      const errMsg = protoMessage.verify(message.content);
-      if (errMsg) {
-        console.error(errMsg);
-        this.setState({
-          error: errMsg
-        });
-        return;
-      }
-      const msg = protoMessage.create(message.content);
-      const buffer = protoMessage.encode(msg).finish();
-      // console.log(buffer, protoMessage.decode(buffer));
-      payloads = [{ topic, messages: buffer, key: uuidv4() }];
-    }
-    this.setState({
-      loading: true
-    });
-
-    producer.send(payloads, (err, data) => {
-      this.setState({
-        loading: false
-      });
-      console.log(err, data);
-    });
+    publishMessage(
+      isProtoEnabled,
+      message,
+      uuidv4(),
+      topic,
+      error => this.setState({ error }),
+      loading => this.setState({ loading }),
+      producer,
+      messageName,
+      proto,
+      packageName
+    );
   };
 
-  onMessageItemSelect = (msg: {
-    name: string;
-    fileName: string;
-    packageName: string;
-  }) => {
+  onMessageItemSelect = (
+    messageName: string,
+    fileName: string,
+    packageName: string
+  ) => {
     this.setState({
       error: ''
     });
 
     const { protos } = this.props;
     Object.keys(protos).forEach(item => {
-      if (protos[item].filepath === msg.fileName) {
+      if (protos[item].filepath === fileName) {
         const mockValue = generateMockData(
-          msg.name,
-          msg.packageName,
+          messageName,
+          packageName,
           protos[item].data
         );
         this.setState({
           message: { type: 'object', content: mockValue },
-          messageName: msg.name,
-          proto: msg.fileName,
-          packageName: msg.packageName
+          messageName,
+          proto: fileName,
+          packageName
         });
       }
     });
@@ -216,7 +194,7 @@ class Home extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: GlobalState) {
   return {
     isProtoEnabled: state.appConfig.protoEnabled,
     protos: state.appCache.protos

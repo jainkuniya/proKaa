@@ -1,14 +1,20 @@
-export const UPDATE_PROTO_PATH = 'UPDATE_PROTO_PATH';
-export const CLEAN_APP_CACHE = 'CLEAN_APP_CACHE';
+import { UPDATE_PROTO_PATH, CLEAN_APP_CACHE } from '../reducers/actionTypes';
+import {
+  ActionUpdateProtoFiles,
+  ActionCleanAppCache,
+  ProtoFile
+} from '../reducers/types';
 
-export function updateProtoPathsAction(updatedProtos: Record<string, any>[]) {
+export function updateProtoPathsAction(
+  updatedProtos: ProtoFile[]
+): ActionUpdateProtoFiles {
   return {
     type: UPDATE_PROTO_PATH,
     updatedProtos
   };
 }
 
-export function cleanAction() {
+export function cleanAction(): ActionCleanAppCache {
   return {
     type: CLEAN_APP_CACHE
   };

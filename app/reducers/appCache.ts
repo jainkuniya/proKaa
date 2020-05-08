@@ -1,11 +1,10 @@
-import { Action } from 'redux';
+import { UPDATE_PROTO_PATH, CLEAN_APP_CACHE } from './actionTypes';
+import { ActionCleanAppCache, ActionUpdateProtoFiles } from './types';
 
-import { UPDATE_PROTO_PATH, CLEAN_APP_CACHE } from '../actions/appCache';
-
-export default function counter(
+export default (
   state = { protos: [] },
-  action: Action<string>
-) {
+  action: ActionCleanAppCache | ActionUpdateProtoFiles
+) => {
   switch (action.type) {
     case UPDATE_PROTO_PATH: {
       return {
@@ -19,4 +18,4 @@ export default function counter(
     default:
       return state;
   }
-}
+};

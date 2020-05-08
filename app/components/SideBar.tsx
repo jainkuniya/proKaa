@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import React, { PureComponent } from 'react';
 import Switch from '@material-ui/core/Switch';
 import Protobuf, { Root } from 'protobufjs';
@@ -6,22 +5,25 @@ import { remote } from 'electron';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
+
 import styles from './SideBar.css';
 import Proto from './Proto';
-
 import { toggleEnableProtoAction } from '../actions/appConfig';
 import { cleanAction, updateProtoPathsAction } from '../actions/appCache';
 import findMessagesInProto from '../parser/parseProto';
+import { GlobalState, ProtoFile } from '../reducers/types';
 
 type Props = {
   isProtoEnabled: boolean;
-  handleProtoEnableToggle: (enabled: boolean) => void;
-  onMessageItemSelect: (msg: {
-    name: string;
-    fields: Record<string, any>;
-    proto: string;
-    packageName: string;
-  }) => void;
+  protos: ProtoFile[];
+  updateProtoFiles: (files: ProtoFile[]) => void;
+  cleanAppCacheAction: () => void;
+  handleEnableProtoToggleChange: (isEnabled: boolean) => void;
+  onMessageItemSelect: (
+    messageName: string,
+    fileName: string,
+    packageName: string
+  ) => void;
 };
 
 const decodeProtoFile = async (filePath: string) => {
@@ -42,7 +44,7 @@ const decodeProtoFile = async (filePath: string) => {
   return null;
 };
 
-class SideBar extends PureComponent<Props, State> {
+class SideBar extends PureComponent<Props> {
   reloadProtoFile = () => {};
 
   loadProtoFile = async () => {
@@ -51,23 +53,20 @@ class SideBar extends PureComponent<Props, State> {
       properties: ['openFile']
     });
 
-    let updatedProtos = [];
+    const updatedProtos: ProtoFile[] = [];
     for (let i = 0; i < result.filePaths.length; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       const data = await decodeProtoFile(result.filePaths[i]);
       if (data) {
-        updatedProtos = [
-          ...updatedProtos,
-          {
-            filepath: result.filePaths[i],
-            data
-          }
-        ];
+        updatedProtos.push({
+          filepath: result.filePaths[i],
+          data
+        });
       }
     }
     if (updatedProtos.length > 0) {
-      const { updateProtoPaths } = this.props;
-      updateProtoPaths(updatedProtos);
+      const { updateProtoFiles } = this.props;
+      updateProtoFiles(updatedProtos);
     }
   };
 
@@ -139,7 +138,7 @@ class SideBar extends PureComponent<Props, State> {
             {Object.keys(protos).map(id => (
               <Proto
                 key={id}
-                proto={protos[id]}
+                proto={protos[parseInt(id, 10)]}
                 onMessageItemSelect={onMessageItemSelect}
               />
             ))}
@@ -150,7 +149,7 @@ class SideBar extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: counterStateType) {
+function mapStateToProps(state: GlobalState) {
   return {
     isProtoEnabled: state.appConfig.protoEnabled,
     protos: state.appCache.protos
@@ -161,7 +160,7 @@ function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators(
     {
       handleEnableProtoToggleChange: toggleEnableProtoAction,
-      updateProtoPaths: updateProtoPathsAction,
+      updateProtoFiles: updateProtoPathsAction,
       cleanAppCacheAction: cleanAction
     },
     dispatch

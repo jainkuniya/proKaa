@@ -1,14 +1,24 @@
-export const TOGGLE_PROTO_ENABLED = 'TOGGLE_PROTO_ENABLED';
-export const UPDATE_KAFKA_HOST = 'UPDATE_KAFKA_HOST';
+import {
+  ActionToggleProtoEnabled,
+  ActionUpdateKafkaHost
+} from '../reducers/types';
+import {
+  TOGGLE_PROTO_ENABLED,
+  UPDATE_KAFKA_HOST
+} from '../reducers/actionTypes';
 
-export function toggleEnableProtoAction(enabled: boolean) {
+export function toggleEnableProtoAction(
+  enabled: boolean
+): ActionToggleProtoEnabled {
   return {
     type: TOGGLE_PROTO_ENABLED,
     enabled
   };
 }
 
-export function updateKafkaHostAction(kafkaHost: string) {
+export function updateKafkaHostAction(
+  kafkaHost: string
+): ActionUpdateKafkaHost {
   return {
     type: UPDATE_KAFKA_HOST,
     kafkaHost
