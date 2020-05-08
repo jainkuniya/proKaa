@@ -2,12 +2,12 @@
   "name": "proKaa",
   "productName": "ProKaa",
   "version": "0.3.4",
-  "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
+  "description": "Application to publish proto messages to kafka",
   "main": "./main.prod.js",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate"
+    "name": "Prokaa Maintainers",
+    "email": "jainkuniya@gmail.com",
+    "url": "https://github.com/jainkuniya/proKaa/"
   },
   "scripts": {
     "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
