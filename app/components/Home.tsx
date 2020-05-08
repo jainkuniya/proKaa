@@ -77,10 +77,17 @@ class Home extends PureComponent<Props, State> {
       error: ''
     });
     const { message, messageName, topic, proto, packageName } = this.state;
+
     let payloads;
     if (!isProtoEnabled) {
       payloads = [{ topic, messages: message.content }];
     } else {
+      if (!messageName) {
+        this.setState({
+          error: 'please select message'
+        });
+        return;
+      }
       const root: Record<string, any> = await Protobuf.load(proto);
       const protoMessage = root.lookupType(`${packageName}.${messageName}`);
       const errMsg = protoMessage.verify(message.content);
