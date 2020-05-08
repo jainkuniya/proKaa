@@ -175,6 +175,7 @@ class Home extends PureComponent<Props, State> {
                 src={{ ...message.content }}
                 onEdit={this.onMessageEdit}
                 onAdd={this.onMessageEdit}
+                onDelete={this.onMessageEdit}
               />
             )}
           </div>
