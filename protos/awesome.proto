@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package awesomepackage;
+
+message SuperbMessage {
+  string superb_field = 1;
+  string text = 2;
+  int32 number = 3;
+  map<string, string> pairs = 4;
+}
+
+message AwesomeMessage {
+    string awesome_field = 1;
+    string text = 2;
+    int32 number = 3;
+    map<string, string> pairs = 4;
+    oneof test_oneof {
+      string name = 5;
+      SuperbMessage super_message = 6;
+    }
+    repeated SuperbMessage repeated_super_message = 7;
+}
