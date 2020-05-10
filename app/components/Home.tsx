@@ -149,6 +149,7 @@ class Home extends PureComponent<Props, State> {
             {!isProtoEnabled ? (
               <textarea
                 className={styles.messageInput}
+                placeholder="start typing here 😃"
                 value={
                   // just to make type happy
                   typeof message.content === 'string' ? message.content : ''
