@@ -40,6 +40,7 @@ const publishMessage = async (
     const buffer = protoMessage.encode(msg).finish();
     payloads = [{ topic, messages: buffer, key }];
   } else {
+    onError('please select proto message');
     return;
   }
 
