@@ -70,7 +70,7 @@ const configureStore = () => {
   const enhancer = composeEnhancers(...enhancers);
 
   const persistConfig = {
-    key: 'counter',
+    key: 'root',
     storage: createElectronStorage()
   };
 
