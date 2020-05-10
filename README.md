@@ -46,6 +46,12 @@ To package Prokaa for the local platform:
 yarn package
 ```
 
+## Background
+
+This is an unplanned project, which is result of a simple thought of having an UI to push proto messages in the Kafka log. So from code perspective, standards and patterns might be missing. It started from [electron-react-boilerplate](https://github.com/electron-react-boilerplate/electron-react-boilerplate), so there might still some boilerplate/unused code. As this project proceeds, we aim to clean and improve it.
+
+Contribution and feedback welcomed :)
+
 ## License
 
 [Apache License 2.0](https://github.com/jainkuniya/proKaa/)
