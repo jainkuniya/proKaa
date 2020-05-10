@@ -1,6 +1,11 @@
 import getMockValueFor from './mockValues';
+import { ProtoData } from '../reducers/types';
 
-const getMsgFields = (msgName: string, packageName: string[], data) => {
+const getMsgFields = (
+  msgName: string,
+  packageName: string[],
+  data: ProtoData[]
+) => {
   let currentData = data;
   packageName.forEach(subPkg => {
     currentData = currentData.find(item => item.packageName === subPkg)

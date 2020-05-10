@@ -29,12 +29,6 @@ export type GlobalState = {
   appConfig: { protoEnabled: boolean; kafkaHost?: string };
 };
 
-export type GetState = () => GlobalState;
-
-export type Dispatch = ReduxDispatch<Action<string>>;
-
-export type Store = ReduxStore<GlobalState, Action<string>>;
-
 export type ActionUpdateProtoFiles = {
   type: typeof UPDATE_PROTO_PATH;
   updatedProtos: ProtoFile[];
@@ -53,3 +47,15 @@ export type ActionUpdateKafkaHost = {
   type: typeof UPDATE_KAFKA_HOST;
   kafkaHost: string;
 };
+
+type ReduxActions =
+  | ActionUpdateProtoFiles
+  | ActionCleanAppCache
+  | ActionToggleProtoEnabled
+  | ActionUpdateKafkaHost;
+
+export type GetState = () => GlobalState;
+
+export type Dispatch = ReduxDispatch<ReduxActions>;
+
+export type Store = ReduxStore<GlobalState, ReduxActions>;

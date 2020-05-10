@@ -7,8 +7,8 @@ import './app.global.css';
 import Root from './containers/Root';
 
 const store = configureStore({
-  protoEnabled: false,
-  kafkaHost: 'localhost:9092'
+  appCache: { protos: [] },
+  appConfig: { protoEnabled: false, kafkaHost: 'localhost:9092' }
 });
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
