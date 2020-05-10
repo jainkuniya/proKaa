@@ -7,12 +7,12 @@ import ReactJson from 'react-json-view';
 import { v4 as uuidv4 } from 'uuid';
 import { Producer } from 'kafka-node';
 
+import { GlobalState, ProtoFile } from '../reducers/types';
 import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
 import generateMockData from '../mock/generateMockData';
 import publishMessage from '../publishMessage';
-import { GlobalState } from '../reducers/types';
 
 type State = {
   message: {
@@ -29,7 +29,7 @@ type State = {
   producer?: Producer;
 };
 
-type Props = { isProtoEnabled: boolean };
+type Props = { isProtoEnabled: boolean; protos: ProtoFile[] };
 
 class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -103,20 +103,22 @@ class Home extends PureComponent<Props, State> {
     });
 
     const { protos } = this.props;
-    Object.keys(protos).forEach(item => {
-      if (protos[item].filepath === fileName) {
-        const mockValue = generateMockData(
-          messageName,
-          packageName,
-          protos[item].data
-        );
-        this.setState({
-          message: { type: 'object', content: mockValue },
-          messageName,
-          proto: fileName,
-          packageName
-        });
-      }
+    const protoFile = protos.find(proto => proto.filepath === fileName);
+    if (!protoFile) {
+      return;
+    }
+
+    const mockValue = generateMockData(
+      messageName,
+      packageName,
+      protoFile.data
+    );
+
+    this.setState({
+      message: { type: 'object', content: mockValue },
+      messageName,
+      proto: fileName,
+      packageName
     });
   };
 
