@@ -189,6 +189,7 @@
     "@types/redux-logger": "^3.0.7",
     "@types/sinon": "^7.5.1",
     "@types/tapable": "^1.0.5",
+    "@types/uuid": "^7.0.3",
     "@types/vfile-message": "^2.0.0",
     "@types/webpack": "^4.41.3",
     "@typescript-eslint/eslint-plugin": "^2.17.0",
