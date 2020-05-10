@@ -146,21 +146,24 @@ class Home extends PureComponent<Props, State> {
             </span>
           </div>
           <div className={styles.messageContainer}>
-            {!isProtoEnabled && typeof message.content === 'string' && (
+            {!isProtoEnabled ? (
               <textarea
                 className={styles.messageInput}
-                value={message.content}
+                value={
+                  // just to make type happy
+                  typeof message.content === 'string' ? message.content : ''
+                }
                 onChange={this.handleMessageChange}
               />
-            )}
-            {typeof message.content === 'object' && (
+            ) : (
               <ReactJson
                 theme="summerfruit:inverted"
                 name={false}
                 displayDataTypes={false}
                 displayObjectSize={false}
                 enableClipboard={false}
-                src={message.content}
+                // just to make type happy
+                src={typeof message.content === 'object' ? message.content : {}}
                 onEdit={this.onMessageEdit}
                 onAdd={this.onMessageEdit}
                 onDelete={this.onMessageEdit}
