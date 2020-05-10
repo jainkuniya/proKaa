@@ -10,12 +10,13 @@ export type ProtoMessageField = {};
 
 export type ProtoMessage = {
   name: string;
-  fields: ProtoMessageField[];
+  fields?: ProtoMessageField[]; // present in messages
+  valuesById?: Map<number, string>; // present in enums
 };
 
 export type ProtoData = {
   packageName: string;
-  messages: ProtoMessage[];
+  messages: (ProtoMessage | ProtoData)[];
 };
 
 export type ProtoFile = {
