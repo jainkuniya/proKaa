@@ -17,8 +17,8 @@ import publishMessage from '../publishMessage';
 type State = {
   message: {
     type: 'string' | 'object';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    content: string | { [k: string]: any };
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    content: string | Object;
   };
   topic: string;
   loading: boolean;
@@ -146,20 +146,21 @@ class Home extends PureComponent<Props, State> {
             </span>
           </div>
           <div className={styles.messageContainer}>
-            {!isProtoEnabled ? (
+            {!isProtoEnabled && typeof message.content === 'string' && (
               <textarea
                 className={styles.messageInput}
                 value={message.content}
                 onChange={this.handleMessageChange}
               />
-            ) : (
+            )}
+            {typeof message.content === 'object' && (
               <ReactJson
                 theme="summerfruit:inverted"
                 name={false}
                 displayDataTypes={false}
                 displayObjectSize={false}
                 enableClipboard={false}
-                src={{ ...message.content }}
+                src={message.content}
                 onEdit={this.onMessageEdit}
                 onAdd={this.onMessageEdit}
                 onDelete={this.onMessageEdit}
