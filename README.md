@@ -6,11 +6,13 @@
   <p align="center"> The missing GUI Client for publishing messages to <b>Kafka</b>. 🌸</p>
 
   <p align="center"> Inspired by <b>BloomRPC</b> </p>
-  <p align="center"> <b>ProKaa</b> aim to give the simplest and efficient developer experience for testing Kafka consumers. </p>
-
-  <p align="center"> Install the client, select your protobuf files and start pushing messages to kafka!
-  No extra steps or configuration needed. </p>
+  <p align="center"> <b>ProKaa</b> aims to give the <b>simplest</b> and efficient developer experience for testing Kafka consumers. </p>
 </p>
+
+## How is works
+Install the client, select your protobuf files and start pushing messages to kafka!
+No extra steps or configuration needed.
+<gif>
 
 ## Contributing
 
@@ -50,7 +52,7 @@ yarn package
 
 This is an unplanned project, which is result of a simple thought of having an UI to push proto messages in the Kafka log. So from code perspective, standards and patterns might be missing. It started from [electron-react-boilerplate](https://github.com/electron-react-boilerplate/electron-react-boilerplate), so there might still some boilerplate/unused code. As this project proceeds, we aim to clean and improve it.
 
-Contribution and feedback welcomed :)
+Contribution and feedback are welcomed :)
 
 ## License
 
