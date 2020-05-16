@@ -11,7 +11,11 @@ const getMsgFields = (
     currentData = currentData.find(item => item.packageName === subPkg)
       .messages;
   });
-  return currentData.find(item => item.name === msgName).fields;
+  const msgDefination = currentData.find(item => item.name === msgName);
+  if (!msgDefination) {
+    throw Error(`Can not find ${msgName}`);
+  }
+  return msgDefination.fields;
 };
 
 const generateMockValue = (

@@ -108,18 +108,22 @@ class Home extends PureComponent<Props, State> {
       return;
     }
 
-    const mockValue = generateMockData(
-      messageName,
-      packageName,
-      protoFile.data
-    );
+    try {
+      const mockValue = generateMockData(
+        messageName,
+        packageName,
+        protoFile.data
+      );
 
-    this.setState({
-      message: { type: 'object', content: mockValue },
-      messageName,
-      proto: fileName,
-      packageName
-    });
+      this.setState({
+        message: { type: 'object', content: mockValue },
+        messageName,
+        proto: fileName,
+        packageName
+      });
+    } catch (e) {
+      this.setState({ error: e.message });
+    }
   };
 
   render() {
