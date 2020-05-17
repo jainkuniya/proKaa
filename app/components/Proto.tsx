@@ -19,11 +19,7 @@ export default class Proto extends PureComponent<Props> {
   ) => {
     const { proto, onMessageItemSelect } = this.props;
     return data.map(item => {
-      if (item.valuesById) {
-        // enum
-        return null;
-      }
-      if (item.packageName) {
+      if (item.packageName && !item.name) {
         return (
           <div className={styles.protoDataWrapper} key={item.packageName}>
             <span className={styles.exapndIcon} />
@@ -39,11 +35,15 @@ export default class Proto extends PureComponent<Props> {
         // there can not be a message without pkgName
         return null;
       }
+
+      if (Object.keys(item.fields).length === 0) {
+        return null;
+      }
       return (
         <div
           tabIndex={item.name}
           role="button"
-          key={item.name}
+          key={`${proto.filepath}.${pkgName}.${item.name}`}
           className={styles.message}
           onKeyPress={
             () => onMessageItemSelect(item.name, proto.filepath, pkgName)

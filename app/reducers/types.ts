@@ -1,4 +1,5 @@
 import { Dispatch as ReduxDispatch, Store as ReduxStore, Action } from 'redux';
+import { Field, MapField } from 'protobufjs';
 import {
   UPDATE_KAFKA_HOST,
   UPDATE_PROTO_PATH,
@@ -6,11 +7,11 @@ import {
   TOGGLE_PROTO_ENABLED
 } from './actionTypes';
 
-export type ProtoMessageField = {};
+export type ProtoMessageFields = { [string]: Field | MapField };
 
 export type ProtoMessage = {
   name: string;
-  fields?: ProtoMessageField[]; // present in messages
+  fields?: ProtoMessageFields; // present in messages
   valuesById?: Map<number, string>; // present in enums
 };
 

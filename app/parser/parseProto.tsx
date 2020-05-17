@@ -1,4 +1,4 @@
-import Protobuf, { Root, Namespace, Type, Enum } from 'protobufjs';
+import Protobuf, { Root, Namespace, Type, Enum, Service } from 'protobufjs';
 
 const findMessagesInProto = (tree: Root | Protobuf.ReflectionObject) => {
   if (tree instanceof Root) {
@@ -13,27 +13,35 @@ const findMessagesInProto = (tree: Root | Protobuf.ReflectionObject) => {
   }
   if (tree instanceof Type) {
     let messages = [];
-    // look for nested messages
     Object.keys(tree.nestedArray).forEach((index: string) => {
-      messages = [
-        ...messages,
-        ...findMessagesInProto(tree.nestedArray[parseInt(index, 10)])
-      ];
+      const data = findMessagesInProto(tree.nestedArray[parseInt(index, 10)]);
+      // console.log(tree.nestedArray[parseInt(index, 10)], data);
+      if (data) {
+        messages = [...messages, ...data];
+      }
     });
-    return [...messages, { name: tree.name, fields: tree.fields }];
+    if (messages.length === 0) {
+      return [{ name: tree.name, fields: tree.fields }];
+    }
+    return [
+      { name: tree.name, fields: tree.fields, packageName: tree.name, messages }
+    ];
   }
   if (tree instanceof Namespace) {
     let messages = [];
     Object.keys(tree.nestedArray).forEach((index: string) => {
-      const newLocal = findMessagesInProto(
-        tree.nestedArray[parseInt(index, 10)]
-      );
-      messages = [...messages, ...newLocal];
+      const subTree = tree.nestedArray[parseInt(index, 10)];
+      if (!(subTree instanceof Service)) {
+        const data = findMessagesInProto(subTree);
+        if (data) {
+          messages = [...messages, ...data];
+        }
+      }
     });
     return [{ packageName: tree.name, messages }];
   }
   if (tree instanceof Enum) {
-    return [{ name: tree.name, valuesById: tree.valuesById }];
+    return [{ name: tree.name, valuesById: tree.valuesById, fields: [] }];
   }
   return null;
 };

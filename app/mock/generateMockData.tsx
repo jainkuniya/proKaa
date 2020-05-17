@@ -1,19 +1,23 @@
 import getMockValueFor from './mockValues';
-import { ProtoData } from '../reducers/types';
+import { ProtoData, ProtoMessageFields, ProtoMessage } from '../reducers/types';
 
 const getMsgFields = (
   msgName: string,
   packageName: string[],
   data: ProtoData[]
-) => {
-  let currentData = data;
-  packageName.forEach(subPkg => {
-    currentData = currentData.find(item => item.packageName === subPkg)
-      .messages;
-  });
+): ProtoMessageFields | void => {
+  let currentData: (ProtoData | ProtoMessage)[] = data;
+  for (let i = 0; i < packageName.length; i += 1) {
+    const subPkg = packageName[i];
+    const msgPackage = currentData.find(item => item.packageName === subPkg);
+    if (!msgPackage || !msgPackage.messages) {
+      return undefined;
+    }
+    currentData = msgPackage.messages;
+  }
   const msgDefination = currentData.find(item => item.name === msgName);
   if (!msgDefination) {
-    throw Error(`Can not find ${msgName}`);
+    return undefined;
   }
   return msgDefination.fields;
 };
@@ -22,7 +26,8 @@ const generateMockValue = (
   fieldName: string,
   fieldType: string,
   data: any,
-  packageName: string
+  packageName: string,
+  parentMsgName?: string
 ) => {
   let mockValue = getMockValueFor(fieldName, fieldType);
   if (!mockValue) {
@@ -30,21 +35,63 @@ const generateMockValue = (
       const customMsg = fieldType.split('.');
       const customMsgName = customMsg.pop();
       const customMsgPackageName = customMsg.join('.');
-      mockValue = generateMockData(customMsgName, customMsgPackageName, data);
+      mockValue = generateMockData(
+        customMsgName,
+        customMsgPackageName,
+        data,
+        packageName,
+        parentMsgName
+      );
     } else {
-      mockValue = generateMockData(fieldType, packageName, data);
+      mockValue = generateMockData(
+        fieldType,
+        packageName,
+        data,
+        packageName,
+        parentMsgName
+      );
     }
   }
   return mockValue;
 };
 
-const generateMockData = (msgName: string, packageName: string, data) => {
+const generateMockData = (
+  msgName: string,
+  packageName: string,
+  data,
+  parentPackageName: string,
+  parentMsgName?: string
+) => {
   const obj = {};
-  const pkg = packageName.split('.').filter(str => str);
+  let pkg = packageName.split('.').filter(str => str);
+  let parentPkg = `${parentPackageName}.${packageName}`
+    .split('.')
+    .filter(str => str);
 
-  const fields = getMsgFields(msgName, pkg, data);
+  let fields = getMsgFields(msgName, pkg, data);
 
   if (!fields) {
+    fields = getMsgFields(msgName, parentPkg, data);
+  }
+
+  if (!fields && parentMsgName) {
+    pkg = `${packageName}.${parentMsgName}`.split('.').filter(str => str);
+    parentPkg = `${parentPackageName}.${parentMsgName}.${packageName}`
+      .split('.')
+      .filter(str => str);
+
+    fields = getMsgFields(msgName, pkg, data);
+
+    if (!fields) {
+      fields = getMsgFields(msgName, parentPkg, data);
+    }
+  }
+
+  if (!fields) {
+    throw Error(`Can not find ${msgName}`);
+  }
+
+  if (Object.keys(fields).length === 0) {
     // enum
     return 0;
   }
@@ -55,7 +102,8 @@ const generateMockData = (msgName: string, packageName: string, data) => {
       fieldName,
       field.type,
       data,
-      packageName
+      packageName,
+      msgName
     );
 
     if (field.rule === 'repeated') {
@@ -67,7 +115,8 @@ const generateMockData = (msgName: string, packageName: string, data) => {
           '',
           field.keyType,
           data,
-          packageName
+          packageName,
+          msgName
         );
         obj[fieldName] = [{ [typeMock]: mockValue }];
       }
@@ -79,7 +128,8 @@ const generateMockData = (msgName: string, packageName: string, data) => {
           '',
           field.keyType,
           data,
-          packageName
+          packageName,
+          msgName
         );
         obj[fieldName] = {};
         obj[fieldName][typeMock] = mockValue;

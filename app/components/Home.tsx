@@ -112,7 +112,8 @@ class Home extends PureComponent<Props, State> {
       const mockValue = generateMockData(
         messageName,
         packageName,
-        protoFile.data
+        protoFile.data,
+        packageName
       );
 
       this.setState({

@@ -2,11 +2,55 @@ syntax = "proto3";
 
 package awesomepackage;
 
+service AwesomeService {
+  rpc getAwesome(AwesomeMessage) returns (SuperbMessage2){}
+}
+
 message SuperbMessage {
+  message NestedMsg {
+    string nested_field = 1;
+
+    message Nested2Msg {
+      string nested_field = 1;
+
+      message Nested3Msg {
+        string nested_field = 1;
+      }
+    }
+  }
+
   string superb_field = 1;
   string text = 2;
   int32 number = 3;
   map<string, string> pairs = 4;
+  NestedMsg other_msg = 8;
+  NestedMsg.Nested2Msg other2_msg = 9;
+  NestedMsg.Nested2Msg.Nested3Msg other3_msg = 10;
+}
+
+message SuperbMessage2 {
+  message NestedMsg {
+    string nested_field = 1;
+    string text = 2;
+    int32 number = 3;
+    map<string, string> pairs = 4;
+
+    message Nested2Msg {
+      string nested_field = 1;
+
+      message Nested3Msg {
+        string nested_field = 1;
+      }
+    }
+  }
+
+  string superb_field = 1;
+  string text = 2;
+  int32 number = 3;
+  map<string, string> pairs = 4;
+  NestedMsg other_msg = 8;
+  NestedMsg.Nested2Msg other2_msg = 9;
+  NestedMsg.Nested2Msg.Nested3Msg other3_msg = 10;
 }
 
 message AwesomeMessage {
@@ -19,4 +63,7 @@ message AwesomeMessage {
       SuperbMessage super_message = 6;
     }
     repeated SuperbMessage repeated_super_message = 7;
+    SuperbMessage.NestedMsg other_msg = 8;
+    SuperbMessage.NestedMsg.Nested2Msg other2_msg = 9;
+    SuperbMessage.NestedMsg.Nested2Msg.Nested3Msg other3_msg = 10;
 }
