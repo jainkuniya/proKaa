@@ -12,7 +12,8 @@ import styles from './Home.css';
 import SideBar from './SideBar';
 import HostInput from './HostInput';
 import generateMockData from '../mock/generateMockData';
-import publishMessage from '../publishMessage';
+import publishMessage from '../kafka/publishMessage';
+import { updateKafkaTopicAction } from '../actions/appConfig';
 
 type State = {
   message: {
@@ -20,7 +21,6 @@ type State = {
     // eslint-disable-next-line @typescript-eslint/ban-types
     content: string | Object;
   };
-  topic: string;
   loading: boolean;
   error?: string;
   proto?: string;
@@ -29,7 +29,12 @@ type State = {
   producer?: Producer;
 };
 
-type Props = { isProtoEnabled: boolean; protos: ProtoFile[] };
+type Props = {
+  isProtoEnabled: boolean;
+  protos: ProtoFile[];
+  kafkaTopic: string;
+  onKafkaTopicChange: (topic: string) => void;
+};
 
 class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -37,7 +42,6 @@ class Home extends PureComponent<Props, State> {
 
     this.state = {
       message: { type: 'string', content: '' },
-      topic: 'topic123',
       loading: false
     };
   }
@@ -64,26 +68,19 @@ class Home extends PureComponent<Props, State> {
   };
 
   handleTopicChange = (host: { target: { value: string } }) => {
-    this.setState({
-      topic: host.target.value
-    });
+    const { onKafkaTopicChange } = this.props;
+    onKafkaTopicChange(host.target.value);
   };
 
   sendMessage = async () => {
-    const {
-      producer,
-      message,
-      messageName,
-      topic,
-      proto,
-      packageName
-    } = this.state;
+    const { producer, message, messageName, proto, packageName } = this.state;
+    const { kafkaTopic } = this.props;
     const { isProtoEnabled } = this.props;
     publishMessage(
       isProtoEnabled,
       message,
       uuidv4(),
-      topic,
+      kafkaTopic,
       error => this.setState({ error }),
       loading => this.setState({ loading }),
       producer,
@@ -128,8 +125,8 @@ class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { message, topic, loading, error } = this.state;
-    const { isProtoEnabled } = this.props;
+    const { message, loading, error } = this.state;
+    const { isProtoEnabled, kafkaTopic } = this.props;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
@@ -141,7 +138,7 @@ class Home extends PureComponent<Props, State> {
             <span className={styles.inputRow}>
               <span className={styles.label}>Topic:</span>
               <input
-                value={topic}
+                value={kafkaTopic}
                 className={styles.topicInput}
                 placeholder="topic"
                 onChange={e => {
@@ -209,12 +206,18 @@ class Home extends PureComponent<Props, State> {
 function mapStateToProps(state: GlobalState) {
   return {
     isProtoEnabled: state.appConfig.protoEnabled,
-    protos: state.appCache.protos
+    protos: state.appCache.protos,
+    kafkaTopic: state.appConfig.kafkaTopic
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch) {
-  return bindActionCreators({}, dispatch);
+  return bindActionCreators(
+    {
+      onKafkaTopicChange: updateKafkaTopicAction
+    },
+    dispatch
+  );
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Home);

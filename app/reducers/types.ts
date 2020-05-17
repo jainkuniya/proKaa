@@ -1,6 +1,7 @@
 import { Dispatch as ReduxDispatch, Store as ReduxStore, Action } from 'redux';
 import { Field, MapField } from 'protobufjs';
 import {
+  UPDATE_KAFKA_TOPIC,
   UPDATE_KAFKA_HOST,
   UPDATE_PROTO_PATH,
   CLEAN_APP_CACHE,
@@ -27,7 +28,7 @@ export type ProtoFile = {
 
 export type GlobalState = {
   appCache: { protos: ProtoFile[] };
-  appConfig: { protoEnabled: boolean; kafkaHost?: string };
+  appConfig: { protoEnabled: boolean; kafkaHost: string; kafkaTopic: string };
 };
 
 export type ActionUpdateProtoFiles = {
@@ -49,11 +50,17 @@ export type ActionUpdateKafkaHost = {
   kafkaHost: string;
 };
 
+export type ActionUpdateKafkaTopic = {
+  type: typeof UPDATE_KAFKA_TOPIC;
+  kafkaTopic: string;
+};
+
 type ReduxActions =
   | ActionUpdateProtoFiles
   | ActionCleanAppCache
   | ActionToggleProtoEnabled
-  | ActionUpdateKafkaHost;
+  | ActionUpdateKafkaHost
+  | ActionUpdateKafkaTopic;
 
 export type GetState = () => GlobalState;
 

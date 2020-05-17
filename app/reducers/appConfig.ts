@@ -1,15 +1,32 @@
-import { TOGGLE_PROTO_ENABLED, UPDATE_KAFKA_HOST } from './actionTypes';
-import { ActionToggleProtoEnabled, ActionUpdateKafkaHost } from './types';
+import {
+  TOGGLE_PROTO_ENABLED,
+  UPDATE_KAFKA_HOST,
+  UPDATE_KAFKA_TOPIC
+} from './actionTypes';
+import {
+  ActionToggleProtoEnabled,
+  ActionUpdateKafkaHost,
+  ActionUpdateKafkaTopic
+} from './types';
 
 export default (
-  state = { protoEnabled: false },
-  action: ActionToggleProtoEnabled | ActionUpdateKafkaHost
+  state = {
+    protoEnabled: false,
+    kafkaHost: 'localhost:9091',
+    kafkaTopic: 'topic123'
+  },
+  action:
+    | ActionToggleProtoEnabled
+    | ActionUpdateKafkaHost
+    | ActionUpdateKafkaTopic
 ) => {
   switch (action.type) {
     case TOGGLE_PROTO_ENABLED:
       return { ...state, protoEnabled: action.enabled };
     case UPDATE_KAFKA_HOST:
       return { ...state, kafkaHost: action.kafkaHost };
+    case UPDATE_KAFKA_TOPIC:
+      return { ...state, kafkaTopic: action.kafkaTopic };
     default:
       return state;
   }
