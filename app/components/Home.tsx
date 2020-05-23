@@ -14,6 +14,7 @@ import HostInput from './HostInput';
 import generateMockData from '../mock/generateMockData';
 import publishMessage from '../kafka/publishMessage';
 import { updateKafkaTopicAction } from '../actions/appConfig';
+import ConsumerPanel from './ConsumerPanel';
 
 type State = {
   message: {
@@ -90,6 +91,12 @@ class Home extends PureComponent<Props, State> {
     );
   };
 
+  onError = (errMsg: string) => {
+    this.setState({
+      error: errMsg
+    });
+  };
+
   onMessageItemSelect = (
     messageName: string,
     fileName: string,
@@ -125,7 +132,14 @@ class Home extends PureComponent<Props, State> {
   };
 
   render() {
-    const { message, loading, error } = this.state;
+    const {
+      message,
+      loading,
+      error,
+      messageName,
+      proto,
+      packageName
+    } = this.state;
     const { isProtoEnabled, kafkaTopic } = this.props;
     return (
       <div className={styles.container} data-tid="container">
@@ -147,56 +161,64 @@ class Home extends PureComponent<Props, State> {
               />
             </span>
           </div>
-          <div className={styles.messageContainer}>
-            {!isProtoEnabled ? (
-              <textarea
-                className={styles.messageInput}
-                placeholder="start typing here 😃"
-                value={
+          <div className={styles.body}>
+            <div className={styles.messageContainer}>
+              {!isProtoEnabled ? (
+                <textarea
+                  className={styles.messageInput}
+                  placeholder="start typing here 😃"
+                  value={
+                    // just to make type happy
+                    typeof message.content === 'string' ? message.content : ''
+                  }
+                  onChange={this.handleMessageChange}
+                />
+              ) : (
+                <ReactJson
+                  theme="summerfruit:inverted"
+                  name={false}
+                  displayDataTypes={false}
+                  displayObjectSize={false}
+                  enableClipboard={false}
                   // just to make type happy
-                  typeof message.content === 'string' ? message.content : ''
-                }
-                onChange={this.handleMessageChange}
+                  src={
+                    typeof message.content === 'object' ? message.content : {}
+                  }
+                  onEdit={this.onMessageEdit}
+                  onAdd={this.onMessageEdit}
+                  onDelete={this.onMessageEdit}
+                />
+              )}
+            </div>
+            <div className={styles.separator}>
+              <Fab
+                className={styles.pushButton}
+                type="button"
+                onClick={this.sendMessage}
+                size="large"
+                style={{
+                  color: 'white',
+                  backgroundColor: 'rgb(245, 0, 87)',
+                  padding: 36,
+                  lineHeight: 0
+                }}
+              >
+                {!loading && <span>Push</span>}
+                <ClipLoader size={20} color="#ffffff" loading={loading} />
+              </Fab>
+            </div>
+            <div className={styles.consumerPanel}>
+              <ConsumerPanel
+                msgName={messageName}
+                protoFile={proto}
+                pkgName={packageName}
+                onError={this.onError}
               />
-            ) : (
-              <ReactJson
-                theme="summerfruit:inverted"
-                name={false}
-                displayDataTypes={false}
-                displayObjectSize={false}
-                enableClipboard={false}
-                // just to make type happy
-                src={typeof message.content === 'object' ? message.content : {}}
-                onEdit={this.onMessageEdit}
-                onAdd={this.onMessageEdit}
-                onDelete={this.onMessageEdit}
-              />
-            )}
+            </div>
           </div>
           {error && (
             <div className={styles.errorWrapper}>{JSON.stringify(error)}</div>
           )}
-          <Fab
-            className={styles.pushButton}
-            type="button"
-            onClick={this.sendMessage}
-            size="large"
-            style={{
-              margin: 0,
-              top: 'auto',
-              height: '70px',
-              width: '70px',
-              right: 20,
-              bottom: 20,
-              left: 'auto',
-              position: 'fixed',
-              color: '#fff',
-              backgroundColor: '#F50057'
-            }}
-          >
-            {!loading && <span>Push</span>}
-            <ClipLoader size={20} color="#ffffff" loading={loading} />
-          </Fab>
         </div>
       </div>
     );

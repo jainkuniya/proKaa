@@ -46,10 +46,17 @@
   flex: 8;
 }
 
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  overflow-y: scroll;
+}
+
 .messageContainer {
   display: flex;
   flex: 1;
-  margin: 16px;
+  padding: 16px 48px 16px 16px;
   overflow-y: scroll;
 }
 
@@ -58,6 +65,20 @@
   font-size: 16px;
   background-color: white;
   padding: 8px;
+}
+
+.separator {
+  box-shadow: 0 0 1.5px inset;
+  width: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.consumerPanel {
+  display: flex;
+  flex: 1;
+  overflow: scroll;
 }
 
 .pushButton {
@@ -95,4 +116,28 @@
 
 button:focus {
   outline: 0;
+}
+
+.offsetText {
+  font-family: monospace;
+}
+
+.consumnerMsgContainer {
+  margin-top: 8px;
+  border-bottom-color: gray;
+  border-bottom-width: 1px;
+  border-bottom-style: dotted;
+  padding: 0 0 8px 48px;
+  padding-right: 16px;
+}
+
+.consumerPanelWrapper {
+  flex: 1;
+}
+
+.panelHeading {
+  color: white;
+  background-color: #263238;
+  font-size: 20px;
+  padding: 8px;
 }
