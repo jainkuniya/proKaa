@@ -31,7 +31,10 @@ export default class KafkaConsumer {
         clientId: `prokaa-${uuidv4()}`,
         brokers: [this.kafkaHost]
       });
-      this.consumer = this.kafka.consumer({ groupId: `prokaa-${uuidv4()}` });
+      this.consumer = this.kafka.consumer({
+        groupId: `prokaa-${uuidv4()}`,
+        allowAutoTopicCreation: false
+      });
       await this.consumer.connect();
       await this.consumer.subscribe({
         topic: this.topic
