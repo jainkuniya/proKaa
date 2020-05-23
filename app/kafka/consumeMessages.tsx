@@ -1,69 +1,52 @@
-import { Consumer, KafkaClient, Message, ConsumerGroup } from 'kafka-node';
+import { Consumer, Kafka, KafkaMessage } from 'kafkajs';
+
 import { v4 as uuidv4 } from 'uuid';
+
+export type ProKaaKafkaMessage = {
+  message: KafkaMessage;
+  partition: number;
+  topic: string;
+};
 
 export default class KafkaConsumer {
   kafkaHost = 'localhost:9092';
 
   topic = 'topic123';
 
-  partition = 0;
-
-  client?: KafkaClient;
+  kafka?: Kafka;
 
   consumer?: Consumer;
 
-  constructor(kafkaHost: string, topic: string, partition: number) {
+  constructor(kafkaHost: string, topic: string) {
     this.kafkaHost = kafkaHost;
     this.topic = topic;
-    this.partition = partition;
   }
 
-  start = (
-    onMessage: (message: Message) => void,
+  start = async (
+    onMessage: (message: ProKaaKafkaMessage) => void,
     onError: (errMsg: string) => void
   ) => {
-    this.client = new KafkaClient({ kafkaHost: this.kafkaHost });
-    this.consumer = new Consumer(
-      this.client,
-      [{ topic: this.topic, partition: this.partition }],
-      {
-        autoCommit: true,
-        groupId: uuidv4(),
-        fromOffset: false,
-        encoding: 'buffer'
-      }
-    );
-
-    const vg = new ConsumerGroup(
-      { kafkaHost: this.kafkaHost, groupId: uuidv4(), autoCommit: false },
-      ['topic123']
-    );
-
-    this.consumer.on('message', message => {
-      onMessage(message);
-    });
-
-    this.client.on('error', err => {
-      onError(err);
-    });
-
-    this.consumer.on('error', err => {
-      onError(err);
-    });
-
-    this.consumer.on('offsetOutOfRange', err => {
-      onError(err);
-    });
+    try {
+      this.kafka = new Kafka({
+        clientId: `prokaa-${uuidv4()}`,
+        brokers: [this.kafkaHost]
+      });
+      this.consumer = this.kafka.consumer({ groupId: `prokaa-${uuidv4()}` });
+      await this.consumer.connect();
+      await this.consumer.subscribe({
+        topic: this.topic
+      });
+      await this.consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+          onMessage({ message, partition, topic });
+        }
+      });
+    } catch (e) {
+      onError(e);
+    }
   };
 
-  changeTopic = (newTopic: string, onError: (errMsg: string) => void) => {
-    this.consumer?.removeTopics(this.topic, onError);
-    this.consumer?.addTopics([newTopic], onError);
-    this.topic = newTopic;
-  };
-
-  destroy = () => {
-    this.client?.close();
-    this.consumer?.close(true, () => {});
+  destroy = async () => {
+    await this.consumer?.stop();
   };
 }

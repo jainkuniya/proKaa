@@ -1,17 +1,21 @@
 import React, { PureComponent } from 'react';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-import { Message } from 'kafka-node';
 
 import ReactJson from 'react-json-view';
 import Protobuf, { Root } from 'protobufjs';
 import styles from './Home.css';
 import { GlobalState } from '../reducers/types';
-import KafkaConsumer from '../kafka/consumeMessages';
+import KafkaConsumer, { ProKaaKafkaMessage } from '../kafka/consumeMessages';
 
 type State = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  messages: ReadonlyArray<{ content: string | Object; offset?: number }>;
+  messages: ReadonlyArray<{
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    content: string | Object;
+    offset: string;
+    topic: string;
+    partition: number;
+  }>;
 };
 
 type Props = {
@@ -43,14 +47,18 @@ class ConsumerPanel extends PureComponent<Props, State> {
     if (protoFile) {
       this.root = await Protobuf.load(protoFile);
     }
-    this.kafkaConsumer = new KafkaConsumer(kafkaHost, kafkaTopic, 0);
+    this.kafkaConsumer = new KafkaConsumer(kafkaHost, kafkaTopic);
     this.kafkaConsumer.start(this.onMessage, this.onError);
   }
 
   async componentDidUpdate(prevProps: Props) {
     const { kafkaTopic, kafkaHost, protoFile } = this.props;
-    if (kafkaTopic !== prevProps.kafkaTopic) {
-      this.kafkaConsumer?.changeTopic(kafkaTopic, this.onError);
+    if (
+      kafkaTopic !== prevProps.kafkaTopic ||
+      kafkaHost !== prevProps.kafkaHost
+    ) {
+      this.kafkaConsumer = new KafkaConsumer(kafkaHost, kafkaTopic);
+      this.kafkaConsumer.start(this.onMessage, this.onError);
     }
     if (protoFile !== prevProps.protoFile && protoFile) {
       this.root = await Protobuf.load(protoFile);
@@ -61,7 +69,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
     this.kafkaConsumer?.destroy();
   }
 
-  onMessage = (message: Message) => {
+  onMessage = ({ message, partition, topic }: ProKaaKafkaMessage) => {
     const { messages } = this.state;
     const { pkgName, msgName, isProtoEnabled, onError } = this.props;
     if (this.root && isProtoEnabled) {
@@ -70,14 +78,19 @@ class ConsumerPanel extends PureComponent<Props, State> {
         const decodeMsg = protoMessage.decode(message.value);
         this.setState({
           messages: [
-            { content: decodeMsg, offset: message.offset },
+            { content: decodeMsg, offset: message.offset, partition, topic },
             ...messages
           ]
         });
       } catch (e) {
         this.setState({
           messages: [
-            { content: message.value.toString(), offset: message.offset },
+            {
+              content: message.value?.toString(),
+              offset: message.offset,
+              partition,
+              topic
+            },
             ...messages
           ]
         });
@@ -86,7 +99,12 @@ class ConsumerPanel extends PureComponent<Props, State> {
     } else {
       this.setState({
         messages: [
-          { content: message.value.toString(), offset: message.offset },
+          {
+            content: message.value.toString(),
+            offset: message.offset,
+            partition,
+            topic
+          },
           ...messages
         ]
       });
@@ -99,17 +117,16 @@ class ConsumerPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { messages, error } = this.state;
+    const { messages } = this.state;
     return (
       <div className={styles.consumerPanelWrapper}>
         <div className={styles.panelHeading}>Kafka consumner</div>
-        {error && JSON.stringify(error)}
         {messages.map(msg => {
           return (
             <div className={styles.consumnerMsgContainer} key={msg.offset}>
-              <span className={styles.offsetText}>
-                {`Offset: ${msg.offset}`}
-              </span>
+              <p className={styles.offsetText}>
+                {`Topic: ${msg.topic} Partition: ${msg.partition} Offset: ${msg.offset}`}
+              </p>
               {typeof msg.content === 'object' ? (
                 <ReactJson
                   key={msg.offset}
