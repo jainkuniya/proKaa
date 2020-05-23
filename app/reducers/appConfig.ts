@@ -12,7 +12,7 @@ import {
 export default (
   state = {
     protoEnabled: false,
-    kafkaHost: 'localhost:9091',
+    kafkaHost: 'localhost:9092',
     kafkaTopic: 'topic123'
   },
   action:
