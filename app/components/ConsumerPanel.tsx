@@ -120,7 +120,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
     const { messages } = this.state;
     return (
       <div className={styles.consumerPanelWrapper}>
-        <div className={styles.panelHeading}>Kafka consumner</div>
+        <div className={styles.panelHeading}>Kafka Consumer</div>
         {messages.map(msg => {
           return (
             <div className={styles.consumnerMsgContainer} key={msg.offset}>
