@@ -31,14 +31,14 @@ export default class Proto extends PureComponent<Props> {
           </div>
         );
       }
-      if (!pkgName) {
-        // there can not be a message without pkgName
-        return null;
-      }
+      // if (!pkgName) {
+      //   // there can not be a message without pkgName
+      //   return null;
+      // }
 
-      if (Object.keys(item.fields).length === 0) {
-        return null;
-      }
+      // if (Object.keys(item.fields).length === 0) {
+      //   return null;
+      // }
       return (
         <div
           tabIndex={item.name}

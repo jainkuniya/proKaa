@@ -1,6 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import Fab from '@material-ui/core/Fab';
 import ClipLoader from 'react-spinners/ClipLoader';
+import { Button } from '@material-ui/core';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
@@ -10,11 +11,15 @@ import { Producer } from 'kafka-node';
 import { GlobalState, ProtoFile } from '../reducers/types';
 import styles from './Home.css';
 import SideBar from './SideBar';
-import HostInput from './HostInput';
+
 import generateMockData from '../mock/generateMockData';
 import publishMessage from '../kafka/publishMessage';
-import { updateKafkaTopicAction } from '../actions/appConfig';
+import {
+  updateKafkaTopicAction,
+  updateKafkaHostAction
+} from '../actions/appConfig';
 import ConsumerPanel from './ConsumerPanel';
+import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
 
 type State = {
   message: {
@@ -22,7 +27,10 @@ type State = {
     // eslint-disable-next-line @typescript-eslint/ban-types
     content: string | Object;
   };
-  loading: boolean;
+  kafkaHost: string;
+  isLoading: boolean;
+  isSendMsgLoading: boolean;
+  isConnected: boolean;
   error?: string;
   proto?: string;
   packageName?: string;
@@ -31,20 +39,31 @@ type State = {
 };
 
 type Props = {
+  kafkaHost: string;
   isProtoEnabled: boolean;
   protos: ProtoFile[];
   kafkaTopic: string;
   onKafkaTopicChange: (topic: string) => void;
+  onKafkaHostChange: (kafkaHost: string) => void;
 };
 
 class Home extends PureComponent<Props, State> {
+  prokaaKafkaClient?: ProkaaKafkaClient;
+
   constructor(props: Props) {
     super(props);
 
     this.state = {
+      kafkaHost: props.kafkaHost,
       message: { type: 'string', content: '' },
-      loading: false
+      isLoading: false,
+      isSendMsgLoading: false,
+      isConnected: false
     };
+  }
+
+  componentDidMount() {
+    this.connectKafka();
   }
 
   updateProducer = (newProducer?: Producer, error?: string) => {
@@ -74,26 +93,47 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
-    const { producer, message, messageName, proto, packageName } = this.state;
+    if (!this.prokaaKafkaClient) {
+      this.onError('please connect to the kafka');
+      return;
+    }
+
+    const { message, messageName, proto, packageName } = this.state;
     const { kafkaTopic } = this.props;
-    const { isProtoEnabled } = this.props;
     publishMessage(
-      isProtoEnabled,
-      message,
+      this.prokaaKafkaClient,
+      message.content,
       uuidv4(),
       kafkaTopic,
       error => this.setState({ error }),
-      loading => this.setState({ loading }),
-      producer,
+      this.toggleSendMsgLoading,
       messageName,
       proto,
       packageName
     );
   };
 
-  onError = (errMsg: string) => {
+  onError = (error: string) => {
     this.setState({
-      error: errMsg
+      error
+    });
+  };
+
+  toggleLoading = (isLoading: boolean) => {
+    this.setState({
+      isLoading
+    });
+  };
+
+  toggleSendMsgLoading = (isSendMsgLoading: boolean) => {
+    this.setState({
+      isSendMsgLoading
+    });
+  };
+
+  toggleConnected = (isConnected: boolean) => {
+    this.setState({
+      isConnected
     });
   };
 
@@ -131,14 +171,52 @@ class Home extends PureComponent<Props, State> {
     }
   };
 
+  handleKafkaHostChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      kafkaHost: event.target.value
+    });
+    this.toggleConnected(false);
+  };
+
+  connectKafka = () => {
+    const { onKafkaHostChange } = this.props;
+    const { kafkaHost } = this.state;
+    this.prokaaKafkaClient = new ProkaaKafkaClient(kafkaHost);
+
+    this.toggleLoading(true);
+    this.toggleConnected(false);
+
+    this.prokaaKafkaClient
+      ?.connectProducer()
+      .then(
+        () => {
+          this.toggleConnected(true);
+          this.onError('');
+          onKafkaHostChange(kafkaHost);
+        },
+        e => {
+          this.toggleConnected(false);
+          this.onError(e);
+        }
+      )
+      .catch(e => {
+        this.toggleConnected(false);
+        this.onError(e);
+      })
+      .finally(() => this.toggleLoading(false));
+  };
+
   render() {
     const {
+      kafkaHost,
       message,
-      loading,
+      isLoading,
+      isConnected,
       error,
       messageName,
       proto,
-      packageName
+      packageName,
+      isSendMsgLoading
     } = this.state;
     const { isProtoEnabled, kafkaTopic } = this.props;
     return (
@@ -148,7 +226,35 @@ class Home extends PureComponent<Props, State> {
         </div>
         <div className={styles.rightPanel}>
           <div>
-            <HostInput updateProducer={this.updateProducer} />
+            <span className={styles.inputRow}>
+              <span className={styles.label}>Kafka Host:</span>
+              <input
+                value={kafkaHost}
+                className={styles.input}
+                placeholder={kafkaHost}
+                onChange={e => {
+                  this.handleKafkaHostChange(e);
+                }}
+                disabled={isLoading}
+              />
+              <Button
+                className={styles.connectButton}
+                type="button"
+                onClick={this.connectKafka}
+                style={{
+                  backgroundColor: '#E91E63',
+                  color: '#fff',
+                  marginLeft: '2px'
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ClipLoader size={20} color="#ffffff" loading={isLoading} />
+                ) : (
+                  <span>{isConnected ? 'Connected' : 'connect'}</span>
+                )}
+              </Button>
+            </span>
             <span className={styles.inputRow}>
               <span className={styles.label}>Topic:</span>
               <input
@@ -203,8 +309,12 @@ class Home extends PureComponent<Props, State> {
                   lineHeight: 0
                 }}
               >
-                {!loading && <span>Push</span>}
-                <ClipLoader size={20} color="#ffffff" loading={loading} />
+                {!isSendMsgLoading && <span>Push</span>}
+                <ClipLoader
+                  size={20}
+                  color="#ffffff"
+                  loading={isSendMsgLoading}
+                />
               </Fab>
             </div>
             <div className={styles.consumerPanel}>
@@ -227,6 +337,7 @@ class Home extends PureComponent<Props, State> {
 
 function mapStateToProps(state: GlobalState) {
   return {
+    kafkaHost: state.appConfig.kafkaHost,
     isProtoEnabled: state.appConfig.protoEnabled,
     protos: state.appCache.protos,
     kafkaTopic: state.appConfig.kafkaTopic
@@ -236,7 +347,8 @@ function mapStateToProps(state: GlobalState) {
 function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators(
     {
-      onKafkaTopicChange: updateKafkaTopicAction
+      onKafkaTopicChange: updateKafkaTopicAction,
+      onKafkaHostChange: updateKafkaHostAction
     },
     dispatch
   );
