@@ -1,6 +1,7 @@
-import { Dispatch as ReduxDispatch, Store as ReduxStore, Action } from 'redux';
+import { Dispatch as ReduxDispatch, Store as ReduxStore } from 'redux';
 import { Field, MapField } from 'protobufjs';
 import {
+  TOGGLE_IS_CONSUMER_CONNECTING as UPDATE_CONSUMER_STATE,
   UPDATE_KAFKA_TOPIC,
   UPDATE_KAFKA_HOST,
   UPDATE_PROTO_PATH,
@@ -26,8 +27,14 @@ export type ProtoFile = {
   data: ProtoData[];
 };
 
+export enum ProKaaConsumerState {
+  CONNECTED,
+  CONNECTING,
+  ERROR
+}
+
 export type GlobalState = {
-  appCache: { protos: ProtoFile[] };
+  appCache: { protos: ProtoFile[]; consumerState: ProKaaConsumerState };
   appConfig: { protoEnabled: boolean; kafkaHost: string; kafkaTopic: string };
 };
 
@@ -38,6 +45,11 @@ export type ActionUpdateProtoFiles = {
 
 export type ActionCleanAppCache = {
   type: typeof CLEAN_APP_CACHE;
+};
+
+export type ActionUpdateConsumerStatus = {
+  type: typeof UPDATE_CONSUMER_STATE;
+  consumerState: ProKaaConsumerState;
 };
 
 export type ActionToggleProtoEnabled = {

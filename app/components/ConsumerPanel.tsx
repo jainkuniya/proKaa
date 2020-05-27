@@ -6,7 +6,8 @@ import ReactJson from 'react-json-view';
 import Protobuf, { Root } from 'protobufjs';
 
 import styles from './Home.css';
-import { GlobalState } from '../reducers/types';
+import { GlobalState, ProKaaConsumerState } from '../reducers/types';
+import { toggleIsConsumerConnectingAction } from '../actions/appCache';
 import ProkaaKafkaClient, {
   ProKaaError,
   ProKaaKafkaMessage
@@ -31,6 +32,7 @@ type Props = {
   isProtoEnabled: boolean;
   kafkaTopic: string;
   kafkaHost: string;
+  toggleIsConsumerConnecting: (consumerState: ProKaaConsumerState) => void;
 };
 
 class ConsumerPanel extends PureComponent<Props, State> {
@@ -44,13 +46,11 @@ class ConsumerPanel extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { kafkaTopic, protoFile } = this.props;
-    await ProkaaKafkaClient.getInstance().connectConsumer(
-      kafkaTopic,
-      false,
-      this.onError
-    );
+    const { protoFile } = this.props;
+
+    this.connectConsumer();
     ProkaaKafkaClient.getInstance().addConsumer(this.onMessage);
+
     if (protoFile) {
       this.root = await Protobuf.load(protoFile);
     }
@@ -64,13 +64,30 @@ class ConsumerPanel extends PureComponent<Props, State> {
     }
 
     if (kafkaTopic !== prevProps.kafkaTopic && kafkaTopic) {
-      ProkaaKafkaClient.getInstance().connectConsumer(
-        kafkaTopic,
-        false,
-        this.onError
-      );
+      this.connectConsumer();
     }
   }
+
+  connectConsumer = async () => {
+    const { kafkaTopic, toggleIsConsumerConnecting } = this.props;
+    try {
+      toggleIsConsumerConnecting(ProKaaConsumerState.CONNECTING);
+      await ProkaaKafkaClient.getInstance().connectConsumer(kafkaTopic, false);
+      toggleIsConsumerConnecting(ProKaaConsumerState.CONNECTED);
+      this.onError();
+    } catch (e) {
+      toggleIsConsumerConnecting(ProKaaConsumerState.ERROR);
+      this.onError({
+        message: `Unable to create consumer: ${e.type} ${kafkaTopic}`,
+        onRetry: e.retriable
+          ? () => {
+              this.onError();
+              return this.connectConsumer();
+            }
+          : undefined
+      });
+    }
+  };
 
   onMessage = ({ message, partition, topic }: ProKaaKafkaMessage) => {
     const { messages } = this.state;
@@ -179,7 +196,12 @@ function mapStateToProps(state: GlobalState) {
 }
 
 function mapDispatchToProps(dispatch: Dispatch) {
-  return bindActionCreators({}, dispatch);
+  return bindActionCreators(
+    {
+      toggleIsConsumerConnecting: toggleIsConsumerConnectingAction
+    },
+    dispatch
+  );
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ConsumerPanel);

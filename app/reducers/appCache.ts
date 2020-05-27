@@ -1,9 +1,21 @@
-import { UPDATE_PROTO_PATH, CLEAN_APP_CACHE } from './actionTypes';
-import { ActionCleanAppCache, ActionUpdateProtoFiles } from './types';
+import {
+  ProKaaConsumerState,
+  ActionCleanAppCache,
+  ActionUpdateProtoFiles,
+  ActionUpdateConsumerStatus
+} from './types';
+import {
+  UPDATE_PROTO_PATH,
+  CLEAN_APP_CACHE,
+  TOGGLE_IS_CONSUMER_CONNECTING
+} from './actionTypes';
 
 export default (
-  state = { protos: [] },
-  action: ActionCleanAppCache | ActionUpdateProtoFiles
+  state = { protos: [], consumerState: ProKaaConsumerState.CONNECTING },
+  action:
+    | ActionCleanAppCache
+    | ActionUpdateProtoFiles
+    | ActionUpdateConsumerStatus
 ) => {
   switch (action.type) {
     case UPDATE_PROTO_PATH: {
@@ -14,6 +26,9 @@ export default (
     }
     case CLEAN_APP_CACHE: {
       return { protos: [] };
+    }
+    case TOGGLE_IS_CONSUMER_CONNECTING: {
+      return { ...state, consumerState: action.consumerState };
     }
     default:
       return state;

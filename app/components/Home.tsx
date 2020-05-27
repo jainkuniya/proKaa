@@ -8,7 +8,7 @@ import ReactJson from 'react-json-view';
 import { v4 as uuidv4 } from 'uuid';
 import { Producer } from 'kafka-node';
 
-import { GlobalState, ProtoFile } from '../reducers/types';
+import { GlobalState, ProtoFile, ProKaaConsumerState } from '../reducers/types';
 import styles from './Home.css';
 import SideBar from './SideBar';
 
@@ -28,6 +28,7 @@ type State = {
     content: string | Object;
   };
   kafkaHost: string;
+  kafkaTopic: string;
   isLoading: boolean;
   isSendMsgLoading: boolean;
   isConnected: boolean;
@@ -41,6 +42,7 @@ type State = {
 type Props = {
   kafkaHost: string;
   isProtoEnabled: boolean;
+  consumerState: ProKaaConsumerState;
   protos: ProtoFile[];
   kafkaTopic: string;
   onKafkaTopicChange: (topic: string) => void;
@@ -57,6 +59,7 @@ class Home extends PureComponent<Props, State> {
 
     this.state = {
       kafkaHost: props.kafkaHost,
+      kafkaTopic: props.kafkaTopic,
       message: { type: 'string', content: '' },
       isLoading: false,
       isSendMsgLoading: false,
@@ -86,8 +89,15 @@ class Home extends PureComponent<Props, State> {
   };
 
   handleTopicChange = (host: { target: { value: string } }) => {
+    this.setState({
+      kafkaTopic: host.target.value
+    });
+  };
+
+  updateTopic = () => {
     const { onKafkaTopicChange } = this.props;
-    onKafkaTopicChange(host.target.value);
+    const { kafkaTopic } = this.state;
+    onKafkaTopicChange(kafkaTopic);
   };
 
   sendMessage = async () => {
@@ -206,6 +216,7 @@ class Home extends PureComponent<Props, State> {
   render() {
     const {
       kafkaHost,
+      kafkaTopic,
       message,
       isLoading,
       isConnected,
@@ -215,7 +226,7 @@ class Home extends PureComponent<Props, State> {
       packageName,
       isSendMsgLoading
     } = this.state;
-    const { isProtoEnabled, kafkaTopic } = this.props;
+    const { consumerState, isProtoEnabled } = this.props;
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
@@ -258,10 +269,42 @@ class Home extends PureComponent<Props, State> {
                 value={kafkaTopic}
                 className={styles.topicInput}
                 placeholder="topic"
+                disabled={consumerState === ProKaaConsumerState.CONNECTING}
                 onChange={e => {
                   this.handleTopicChange(e);
                 }}
               />
+              <Button
+                className={styles.connectButton}
+                type="button"
+                onClick={this.updateTopic}
+                style={{
+                  backgroundColor: '#E91E63',
+                  color: '#fff',
+                  marginLeft: '2px'
+                }}
+                disabled={
+                  consumerState === ProKaaConsumerState.CONNECTED &&
+                  // eslint-disable-next-line react/destructuring-assignment
+                  kafkaTopic === this.props.kafkaTopic
+                }
+              >
+                {consumerState === ProKaaConsumerState.CONNECTING ? (
+                  <ClipLoader
+                    size={20}
+                    color="#ffffff"
+                    loading={consumerState === ProKaaConsumerState.CONNECTING}
+                  />
+                ) : (
+                  <span>
+                    {consumerState === ProKaaConsumerState.CONNECTED &&
+                    // eslint-disable-next-line react/destructuring-assignment
+                    kafkaTopic === this.props.kafkaTopic
+                      ? '✓'
+                      : 'Update'}
+                  </span>
+                )}
+              </Button>
             </span>
           </div>
           <div className={styles.body}>
@@ -336,7 +379,8 @@ function mapStateToProps(state: GlobalState) {
     kafkaHost: state.appConfig.kafkaHost,
     isProtoEnabled: state.appConfig.protoEnabled,
     protos: state.appCache.protos,
-    kafkaTopic: state.appConfig.kafkaTopic
+    kafkaTopic: state.appConfig.kafkaTopic,
+    consumerState: state.appCache.consumerState
   };
 }
 

@@ -108,11 +108,7 @@ export default class ProkaaKafkaClient {
     this.onMessage.forEach(callback => callback(msg));
   };
 
-  connectConsumer = async (
-    topic: string,
-    fromBeginning = false,
-    onError?: (error?: ProKaaError) => void
-  ) => {
+  connectConsumer = async (topic: string, fromBeginning = false) => {
     try {
       await this.disconnectConsumer();
 
@@ -130,23 +126,10 @@ export default class ProkaaKafkaClient {
           this.handleMessage({ message, partition, topic });
         }
       });
-      if (onError) {
-        onError();
-      }
     } catch (e) {
-      // go to fresh state
+      // rollback changes
       this.disconnectConsumer();
-      if (onError) {
-        onError({
-          message: `Unable to create consumer: ${e.type} ${topic}`,
-          onRetry: e.retriable
-            ? () => {
-                onError();
-                return this.connectConsumer(topic, fromBeginning, onError);
-              }
-            : undefined
-        });
-      }
+      throw e;
     }
   };
 
