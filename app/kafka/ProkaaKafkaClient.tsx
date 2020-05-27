@@ -3,10 +3,17 @@ import {
   Kafka,
   KafkaMessage,
   Producer,
-  RecordMetadata
+  RecordMetadata,
+  Admin
 } from 'kafkajs';
 
 import { v4 as uuidv4 } from 'uuid';
+
+export type ProKaaError = {
+  message: string;
+  autoHideDuration?: number;
+  onRetry?: () => Promise<void> | void;
+};
 
 export type ProKaaKafkaMessage = {
   message: KafkaMessage;
@@ -15,15 +22,29 @@ export type ProKaaKafkaMessage = {
 };
 
 export default class ProkaaKafkaClient {
+  static instance?: ProkaaKafkaClient = undefined;
+
+  static getInstance(kafkaHost?: string) {
+    if (!ProkaaKafkaClient.instance) {
+      if (!kafkaHost) {
+        throw Error('kafkaHost cannot be undefined');
+      }
+      ProkaaKafkaClient.instance = new ProkaaKafkaClient(kafkaHost);
+    }
+    return ProkaaKafkaClient.instance;
+  }
+
   kafkaHost = 'localhost:9092';
 
   kafka?: Kafka;
+
+  admin?: Admin;
 
   consumer?: Consumer;
 
   producer?: Producer;
 
-  onMessage: (m: ProKaaKafkaMessage) => void = () => {};
+  onMessage: { (m: ProKaaKafkaMessage): void }[] = [];
 
   constructor(kafkaHost: string) {
     this.kafkaHost = kafkaHost;
@@ -32,27 +53,48 @@ export default class ProkaaKafkaClient {
       clientId: `prokaa-${uuidv4()}`,
       brokers: [this.kafkaHost]
     });
+    this.admin = this.kafka.admin();
   }
 
-  sendMessage = (
+  addConsumer = (onMessage: (msg: ProKaaKafkaMessage) => void) => {
+    this.onMessage.push(onMessage);
+  };
+
+  sendMessage = async (
     key: string,
     topic: string,
     value: Buffer | string
   ): Promise<RecordMetadata[]> => {
     if (!this.producer) {
-      return new Promise(() => {
-        throw Error('Not able to connect to the producer');
-      });
+      throw Error('Not able to connect to the producer');
     }
 
-    return this.producer.send({
-      topic,
-      messages: [{ key, value }]
-    });
+    let records;
+    try {
+      records = await this.producer.send({
+        topic,
+        messages: [{ key, value }]
+      });
+    } catch (e) {
+      await this.admin?.fetchTopicMetadata({ topics: [topic] });
+      throw e;
+    }
+
+    // if consumer is not connected, connect it
+    if (!this.consumer) {
+      this.connectConsumer(topic, true);
+    }
+
+    return records;
   };
 
   connectProducer = (): Promise<void> => {
-    this.producer = this.kafka?.producer();
+    this.producer = this.kafka?.producer({
+      allowAutoTopicCreation: false,
+      retry: {
+        retries: 0
+      }
+    });
 
     return (
       this.producer?.connect() ||
@@ -62,25 +104,61 @@ export default class ProkaaKafkaClient {
     );
   };
 
-  connectConsumer = async (topic: string) => {
-    this.consumer = this.kafka?.consumer({
-      groupId: `prokaa-${uuidv4()}`,
-      allowAutoTopicCreation: false
-    });
-    await this.consumer?.connect();
-    await this.consumer?.subscribe({
-      topic
-    });
-    await this.consumer?.run({
-      eachMessage: async ({ partition, message }) => {
-        this.onMessage({ message, partition, topic });
+  handleMessage = (msg: ProKaaKafkaMessage) => {
+    this.onMessage.forEach(callback => callback(msg));
+  };
+
+  connectConsumer = async (
+    topic: string,
+    fromBeginning = false,
+    onError?: (error?: ProKaaError) => void
+  ) => {
+    try {
+      await this.disconnectConsumer();
+
+      this.consumer = this.kafka?.consumer({
+        groupId: `prokaa-${uuidv4()}`,
+        allowAutoTopicCreation: false
+      });
+      await this.consumer?.connect();
+      await this.consumer?.subscribe({
+        topic,
+        fromBeginning
+      });
+      await this.consumer?.run({
+        eachMessage: async ({ partition, message }) => {
+          this.handleMessage({ message, partition, topic });
+        }
+      });
+      if (onError) {
+        onError();
       }
-    });
+    } catch (e) {
+      // go to fresh state
+      this.disconnectConsumer();
+      if (onError) {
+        onError({
+          message: `Unable to create consumer: ${e.type} ${topic}`,
+          onRetry: e.retriable
+            ? () => {
+                onError();
+                return this.connectConsumer(topic, fromBeginning, onError);
+              }
+            : undefined
+        });
+      }
+    }
+  };
+
+  disconnectConsumer = async () => {
+    await this.consumer?.disconnect();
+    await this.consumer?.stop();
+
+    this.consumer = undefined;
   };
 
   destroy = async () => {
     await this.producer?.disconnect();
-    await this.consumer?.disconnect();
-    await this.consumer?.stop();
+    await this.disconnectConsumer();
   };
 }

@@ -53,6 +53,8 @@ class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    this.connectKafka(props, props.kafkaHost);
+
     this.state = {
       kafkaHost: props.kafkaHost,
       message: { type: 'string', content: '' },
@@ -60,10 +62,6 @@ class Home extends PureComponent<Props, State> {
       isSendMsgLoading: false,
       isConnected: false
     };
-  }
-
-  componentDidMount() {
-    this.connectKafka();
   }
 
   updateProducer = (newProducer?: Producer, error?: string) => {
@@ -178,10 +176,9 @@ class Home extends PureComponent<Props, State> {
     this.toggleConnected(false);
   };
 
-  connectKafka = () => {
-    const { onKafkaHostChange } = this.props;
-    const { kafkaHost } = this.state;
-    this.prokaaKafkaClient = new ProkaaKafkaClient(kafkaHost);
+  connectKafka = (props: Props, kafkaHost: string) => {
+    const { onKafkaHostChange } = props;
+    this.prokaaKafkaClient = ProkaaKafkaClient.getInstance(kafkaHost);
 
     this.toggleLoading(true);
     this.toggleConnected(false);
@@ -322,7 +319,6 @@ class Home extends PureComponent<Props, State> {
                 msgName={messageName}
                 protoFile={proto}
                 pkgName={packageName}
-                onError={this.onError}
               />
             </div>
           </div>

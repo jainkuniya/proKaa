@@ -42,13 +42,13 @@ const publishMessage = async (
 
   updateLoading(true);
 
-  // eslint-disable-next-line promise/catch-or-return
-  prokaaKafkaClient
-    .sendMessage(key, topic, value)
-    .catch(e => {
-      onError(e.message);
-    })
-    .finally(() => updateLoading(false));
+  try {
+    await prokaaKafkaClient.sendMessage(key, topic, value);
+  } catch (e) {
+    onError(e.message);
+  }
+
+  updateLoading(false);
 };
 
 export default publishMessage;

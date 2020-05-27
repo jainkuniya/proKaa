@@ -1,14 +1,19 @@
 import React, { PureComponent } from 'react';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-
+import { Button, Snackbar } from '@material-ui/core';
 import ReactJson from 'react-json-view';
 import Protobuf, { Root } from 'protobufjs';
+
 import styles from './Home.css';
 import { GlobalState } from '../reducers/types';
-import KafkaConsumer, { ProKaaKafkaMessage } from '../kafka/consumeMessages';
+import ProkaaKafkaClient, {
+  ProKaaError,
+  ProKaaKafkaMessage
+} from '../kafka/ProkaaKafkaClient';
 
 type State = {
+  error?: ProKaaError;
   messages: ReadonlyArray<{
     // eslint-disable-next-line @typescript-eslint/ban-types
     content: string | Object;
@@ -26,14 +31,10 @@ type Props = {
   isProtoEnabled: boolean;
   kafkaTopic: string;
   kafkaHost: string;
-
-  onError: (errMsg: string) => void;
 };
 
 class ConsumerPanel extends PureComponent<Props, State> {
   root?: Root;
-
-  kafkaConsumer?: KafkaConsumer;
 
   constructor(props: Props) {
     super(props);
@@ -43,35 +44,37 @@ class ConsumerPanel extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { kafkaTopic, kafkaHost, protoFile } = this.props;
+    const { kafkaTopic, protoFile } = this.props;
+    await ProkaaKafkaClient.getInstance().connectConsumer(
+      kafkaTopic,
+      false,
+      this.onError
+    );
+    ProkaaKafkaClient.getInstance().addConsumer(this.onMessage);
     if (protoFile) {
       this.root = await Protobuf.load(protoFile);
     }
-    this.kafkaConsumer = new KafkaConsumer(kafkaHost, kafkaTopic);
-    this.kafkaConsumer.start(this.onMessage, this.onError);
   }
 
   async componentDidUpdate(prevProps: Props) {
-    const { kafkaTopic, kafkaHost, protoFile } = this.props;
-    if (
-      kafkaTopic !== prevProps.kafkaTopic ||
-      kafkaHost !== prevProps.kafkaHost
-    ) {
-      this.kafkaConsumer = new KafkaConsumer(kafkaHost, kafkaTopic);
-      this.kafkaConsumer.start(this.onMessage, this.onError);
-    }
+    const { protoFile, kafkaTopic } = this.props;
+
     if (protoFile !== prevProps.protoFile && protoFile) {
       this.root = await Protobuf.load(protoFile);
     }
-  }
 
-  componentWillUnmount() {
-    this.kafkaConsumer?.destroy();
+    if (kafkaTopic !== prevProps.kafkaTopic && kafkaTopic) {
+      ProkaaKafkaClient.getInstance().connectConsumer(
+        kafkaTopic,
+        false,
+        this.onError
+      );
+    }
   }
 
   onMessage = ({ message, partition, topic }: ProKaaKafkaMessage) => {
     const { messages } = this.state;
-    const { pkgName, msgName, isProtoEnabled, onError } = this.props;
+    const { pkgName, msgName, isProtoEnabled } = this.props;
     if (this.root && isProtoEnabled) {
       const protoMessage = this.root.lookupType(`${pkgName}.${msgName}`);
       try {
@@ -94,7 +97,10 @@ class ConsumerPanel extends PureComponent<Props, State> {
             ...messages
           ]
         });
-        onError('Select proto message to decode');
+        this.onError({
+          message: 'Select proto message to decode',
+          autoHideDuration: 2000
+        });
       }
     } else {
       this.setState({
@@ -111,13 +117,14 @@ class ConsumerPanel extends PureComponent<Props, State> {
     }
   };
 
-  onError = (error: string) => {
-    const { onError } = this.props;
-    onError(error);
+  onError = (error?: ProKaaError) => {
+    this.setState({
+      error
+    });
   };
 
   render() {
-    const { messages } = this.state;
+    const { messages, error } = this.state;
     return (
       <div className={styles.consumerPanelWrapper}>
         <div className={styles.panelHeading}>Kafka Consumer</div>
@@ -143,6 +150,21 @@ class ConsumerPanel extends PureComponent<Props, State> {
             </div>
           );
         })}
+        <Snackbar
+          action={
+            error?.onRetry && (
+              <Button color="secondary" size="small" onClick={error?.onRetry}>
+                Retry
+              </Button>
+            )
+          }
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          open={error !== undefined}
+          autoHideDuration={error?.autoHideDuration}
+          // TransitionComponent={state.Transition}
+          message={error?.message}
+          key={JSON.stringify(error)}
+        />
       </div>
     );
   }
