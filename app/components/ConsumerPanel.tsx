@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-import { Button, Snackbar } from '@material-ui/core';
+import Alert from '@material-ui/lab/Alert';
 import ReactJson from 'react-json-view';
 import Protobuf, { Root } from 'protobufjs';
 
@@ -9,9 +9,10 @@ import styles from './Home.css';
 import { GlobalState, ProKaaKafkaClientState } from '../reducers/types';
 import { toggleIsConsumerConnectingAction } from '../actions/appCache';
 import ProkaaKafkaClient, {
-  ProKaaError,
   ProKaaKafkaMessage
 } from '../kafka/ProkaaKafkaClient';
+
+import ProKaaError from '../ProKaaError';
 
 type State = {
   error?: ProKaaError;
@@ -95,15 +96,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
       this.onError();
     } catch (e) {
       toggleIsConsumerConnecting(ProKaaKafkaClientState.ERROR);
-      this.onError({
-        message: `Unable to create consumer: ${e.type} ${kafkaTopic}`,
-        onRetry: e.retriable
-          ? () => {
-              this.onError();
-              return this.connectConsumer();
-            }
-          : undefined
-      });
+      this.onError(e);
     }
   };
 
@@ -163,43 +156,31 @@ class ConsumerPanel extends PureComponent<Props, State> {
     return (
       <div className={styles.consumerPanelWrapper}>
         <div className={styles.panelHeading}>Kafka Consumer</div>
-        {messages.map(msg => {
-          return (
-            <div className={styles.consumnerMsgContainer} key={msg.offset}>
-              <p className={styles.offsetText}>
-                {`Topic: ${msg.topic} Partition: ${msg.partition} Offset: ${msg.offset}`}
-              </p>
-              {typeof msg.content === 'object' ? (
-                <ReactJson
-                  key={msg.offset}
-                  theme="summerfruit:inverted"
-                  name={false}
-                  displayDataTypes={false}
-                  displayObjectSize={false}
-                  enableClipboard={false}
-                  src={msg.content}
-                />
-              ) : (
-                <div>{msg.content}</div>
-              )}
-            </div>
-          );
-        })}
-        <Snackbar
-          action={
-            error?.onRetry && (
-              <Button color="secondary" size="small" onClick={error?.onRetry}>
-                Retry
-              </Button>
-            )
-          }
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          open={error !== undefined}
-          autoHideDuration={error?.autoHideDuration}
-          // TransitionComponent={state.Transition}
-          message={error?.message}
-          key={JSON.stringify(error)}
-        />
+        <div className={styles.messagesWrapper}>
+          {messages.map(msg => {
+            return (
+              <div className={styles.consumnerMsgContainer} key={msg.offset}>
+                <p className={styles.offsetText}>
+                  {`Topic: ${msg.topic} Partition: ${msg.partition} Offset: ${msg.offset}`}
+                </p>
+                {typeof msg.content === 'object' ? (
+                  <ReactJson
+                    key={msg.offset}
+                    theme="summerfruit:inverted"
+                    name={false}
+                    displayDataTypes={false}
+                    displayObjectSize={false}
+                    enableClipboard={false}
+                    src={msg.content}
+                  />
+                ) : (
+                  <div>{msg.content}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {error && <Alert severity="error">{error.message}</Alert>}
       </div>
     );
   }

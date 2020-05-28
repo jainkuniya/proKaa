@@ -133,6 +133,8 @@ button:focus {
 
 .consumerPanelWrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .panelHeading {
@@ -142,4 +144,8 @@ button:focus {
   background-color: #263238;
   font-size: 20px;
   padding: 8px;
+}
+
+.messagesWrapper {
+  flex: 1;
 }

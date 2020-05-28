@@ -6,15 +6,9 @@ import {
   RecordMetadata,
   Admin
 } from 'kafkajs';
-
 import { v4 as uuidv4 } from 'uuid';
-import ProKaaError from '../ProKaaError';
 
-export type ProKaaError = {
-  message: string;
-  autoHideDuration?: number;
-  onRetry?: () => Promise<void> | void;
-};
+import ProKaaError from '../ProKaaError';
 
 export type ProKaaKafkaMessage = {
   message: KafkaMessage;
@@ -139,7 +133,7 @@ export default class ProkaaKafkaClient {
     } catch (e) {
       // rollback changes
       this.disconnectConsumer();
-      throw e;
+      throw new ProKaaError(`Unable to create consumer: ${e.type} ${topic}`);
     }
   };
 
