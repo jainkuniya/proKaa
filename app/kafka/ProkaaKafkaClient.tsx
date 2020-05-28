@@ -8,6 +8,7 @@ import {
 } from 'kafkajs';
 
 import { v4 as uuidv4 } from 'uuid';
+import ProKaaError from '../ProKaaError';
 
 export type ProKaaError = {
   message: string;
@@ -58,7 +59,10 @@ export default class ProkaaKafkaClient {
 
     this.kafka = new Kafka({
       clientId: `prokaa-${uuidv4()}`,
-      brokers: [this.kafkaHost]
+      brokers: [this.kafkaHost],
+      retry: {
+        retries: 0
+      }
     });
     this.admin = this.kafka.admin();
   }
@@ -96,14 +100,18 @@ export default class ProkaaKafkaClient {
   };
 
   connectProducer = async (): Promise<void> => {
-    this.producer = this.kafka?.producer({
-      allowAutoTopicCreation: false,
-      retry: {
-        retries: 0
-      }
-    });
+    try {
+      this.producer = this.kafka?.producer({
+        allowAutoTopicCreation: false,
+        retry: {
+          retries: 0
+        }
+      });
 
-    await this.producer?.connect();
+      await this.producer?.connect();
+    } catch (e) {
+      throw new ProKaaError(e.message);
+    }
   };
 
   handleMessage = (msg: ProKaaKafkaMessage) => {

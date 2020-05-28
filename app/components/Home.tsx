@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
+import Alert from '@material-ui/lab/Alert';
 import Fab from '@material-ui/core/Fab';
 import ClipLoader from 'react-spinners/ClipLoader';
-import { Button } from '@material-ui/core';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
@@ -23,9 +23,10 @@ import {
   updateKafkaHostAction
 } from '../actions/appConfig';
 import ConsumerPanel from './ConsumerPanel';
-import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
 import { toggleIsConsumerConnectingAction } from '../actions/appCache';
 import InputField from './InputField';
+import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
+import ProKaaError from '../ProKaaError';
 
 type State = {
   message: {
@@ -36,7 +37,7 @@ type State = {
   isSendMsgLoading: boolean;
   kafkaClientState: ProKaaKafkaClientState;
   prokaaKafkaClient?: ProkaaKafkaClient;
-  error?: string;
+  error?: ProKaaError;
   proto?: string;
   packageName?: string;
   messageName?: string;
@@ -181,6 +182,7 @@ class Home extends PureComponent<Props, State> {
     try {
       await prokaaKafkaClient.connectProducer();
       this.setState({
+        error: undefined,
         kafkaClientState: ProKaaKafkaClientState.CONNECTED,
         prokaaKafkaClient
       });
@@ -304,9 +306,7 @@ class Home extends PureComponent<Props, State> {
               />
             </div>
           </div>
-          {error && (
-            <div className={styles.errorWrapper}>{JSON.stringify(error)}</div>
-          )}
+          {error && <Alert severity="error">{error.message}</Alert>}
         </div>
       </div>
     );

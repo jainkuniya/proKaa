@@ -15,6 +15,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@material-ui/lab": "^4.0.0-alpha.54",
     "electron-store": "^5.1.1",
     "kafka-node": "^5.0.0",
     "kafkajs": "^1.12.0",
