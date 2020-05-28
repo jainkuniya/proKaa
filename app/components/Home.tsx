@@ -1,4 +1,4 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent } from 'react';
 import Fab from '@material-ui/core/Fab';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { Button } from '@material-ui/core';
@@ -25,6 +25,7 @@ import {
 import ConsumerPanel from './ConsumerPanel';
 import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
 import { toggleIsConsumerConnectingAction } from '../actions/appCache';
+import InputField from './InputField';
 
 type State = {
   message: {
@@ -32,8 +33,6 @@ type State = {
     // eslint-disable-next-line @typescript-eslint/ban-types
     content: string | Object;
   };
-  kafkaHost: string;
-  kafkaTopic: string;
   isSendMsgLoading: boolean;
   kafkaClientState: ProKaaKafkaClientState;
   prokaaKafkaClient?: ProkaaKafkaClient;
@@ -62,8 +61,6 @@ class Home extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      kafkaHost: props.kafkaHost,
-      kafkaTopic: props.kafkaTopic,
       message: { type: 'string', content: '' },
       isSendMsgLoading: false,
       kafkaClientState: ProKaaKafkaClientState.CONNECTING
@@ -71,7 +68,8 @@ class Home extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.connectKafka();
+    const { kafkaHost } = this.props;
+    this.connectKafka(kafkaHost);
   }
 
   updateProducer = (newProducer?: Producer, error?: string) => {
@@ -95,15 +93,8 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  handleTopicChange = (host: { target: { value: string } }) => {
-    this.setState({
-      kafkaTopic: host.target.value
-    });
-  };
-
-  updateTopic = () => {
+  updateTopic = (kafkaTopic: string) => {
     const { onKafkaTopicChange } = this.props;
-    const { kafkaTopic } = this.state;
     onKafkaTopicChange(kafkaTopic);
   };
 
@@ -180,15 +171,8 @@ class Home extends PureComponent<Props, State> {
     }
   };
 
-  handleKafkaHostChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      kafkaHost: event.target.value
-    });
-  };
-
-  connectKafka = async () => {
+  connectKafka = async (kafkaHost: string) => {
     const { onKafkaHostChange, toggleIsConsumerConnecting } = this.props;
-    const { kafkaHost } = this.state;
     const prokaaKafkaClient = ProkaaKafkaClient.getInstance(kafkaHost);
 
     this.setState({
@@ -213,8 +197,6 @@ class Home extends PureComponent<Props, State> {
 
   render() {
     const {
-      kafkaHost,
-      kafkaTopic,
       message,
       error,
       messageName,
@@ -224,21 +206,14 @@ class Home extends PureComponent<Props, State> {
       kafkaClientState,
       prokaaKafkaClient
     } = this.state;
-    const { consumerState, isProtoEnabled } = this.props;
+    const { consumerState, isProtoEnabled, kafkaHost, kafkaTopic } = this.props;
     const isKafkaHostInputDisabled =
       kafkaClientState === ProKaaKafkaClientState.CONNECTING;
     const isKafkaHostButtonDisabeld =
-      kafkaClientState === ProKaaKafkaClientState.CONNECTED &&
-      // eslint-disable-next-line react/destructuring-assignment
-      kafkaHost === this.props.kafkaHost;
+      kafkaClientState === ProKaaKafkaClientState.CONNECTED;
 
     const iskafkaHostConnecting =
       kafkaClientState === ProKaaKafkaClientState.CONNECTING;
-
-    const iskafkaHostConnected =
-      kafkaClientState === ProKaaKafkaClientState.CONNECTED;
-    // eslint-disable-next-line react/destructuring-assignment
-    const isKafkaHostCanBeConnected = kafkaHost === this.props.kafkaHost;
 
     return (
       <div className={styles.container} data-tid="container">
@@ -247,84 +222,28 @@ class Home extends PureComponent<Props, State> {
         </div>
         <div className={styles.rightPanel}>
           <div>
-            <span className={styles.inputRow}>
-              <span className={styles.label}>Kafka Host:</span>
-              <input
-                value={kafkaHost}
-                className={styles.input}
-                placeholder={kafkaHost}
-                onChange={e => {
-                  this.handleKafkaHostChange(e);
-                }}
-                disabled={isKafkaHostInputDisabled}
-              />
-              <Button
-                className={styles.connectButton}
-                type="button"
-                onClick={() => this.connectKafka()}
-                style={{
-                  backgroundColor: '#E91E63',
-                  color: '#fff',
-                  marginLeft: '2px'
-                }}
-                disabled={isKafkaHostButtonDisabeld}
-              >
-                {iskafkaHostConnecting ? (
-                  <ClipLoader size={20} color="#ffffff" loading />
-                ) : (
-                  <span>
-                    {iskafkaHostConnected && isKafkaHostCanBeConnected
-                      ? '✓'
-                      : 'Connect'}
-                  </span>
-                )}
-              </Button>
-            </span>
-            <span className={styles.inputRow}>
-              <span className={styles.label}>Topic:</span>
-              <input
-                value={kafkaTopic}
-                className={styles.topicInput}
-                placeholder="topic"
-                disabled={consumerState === ProKaaKafkaClientState.CONNECTING}
-                onChange={e => {
-                  this.handleTopicChange(e);
-                }}
-              />
-              <Button
-                className={styles.connectButton}
-                type="button"
-                onClick={this.updateTopic}
-                style={{
-                  backgroundColor: '#E91E63',
-                  color: '#fff',
-                  marginLeft: '2px'
-                }}
-                disabled={
-                  consumerState === ProKaaKafkaClientState.CONNECTED &&
-                  // eslint-disable-next-line react/destructuring-assignment
-                  kafkaTopic === this.props.kafkaTopic
-                }
-              >
-                {consumerState === ProKaaKafkaClientState.CONNECTING ? (
-                  <ClipLoader
-                    size={20}
-                    color="#ffffff"
-                    loading={
-                      consumerState === ProKaaKafkaClientState.CONNECTING
-                    }
-                  />
-                ) : (
-                  <span>
-                    {consumerState === ProKaaKafkaClientState.CONNECTED &&
-                    // eslint-disable-next-line react/destructuring-assignment
-                    kafkaTopic === this.props.kafkaTopic
-                      ? '✓'
-                      : 'Update'}
-                  </span>
-                )}
-              </Button>
-            </span>
+            <InputField
+              actionText="Connect"
+              label="Kafka Host:"
+              initialValue={kafkaHost}
+              onSubmit={this.connectKafka}
+              isInputDisable={isKafkaHostInputDisabled}
+              isSubmitDisable={isKafkaHostButtonDisabeld}
+              isLoading={iskafkaHostConnecting}
+            />
+            <InputField
+              actionText="Update"
+              label="Kafka Topic:"
+              initialValue={kafkaTopic}
+              onSubmit={this.updateTopic}
+              isInputDisable={
+                consumerState === ProKaaKafkaClientState.CONNECTING
+              }
+              isSubmitDisable={
+                consumerState === ProKaaKafkaClientState.CONNECTED
+              }
+              isLoading={consumerState === ProKaaKafkaClientState.CONNECTING}
+            />
           </div>
           <div className={styles.body}>
             <div className={styles.messageContainer}>
