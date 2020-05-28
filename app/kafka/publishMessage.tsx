@@ -1,5 +1,6 @@
 import Protobuf, { Root } from 'protobufjs';
 import ProkaaKafkaClient from './ProkaaKafkaClient';
+import ProKaaError from '../ProKaaError';
 
 const publishMessage = async (
   prokaaKafkaClient: ProkaaKafkaClient,
@@ -8,7 +9,7 @@ const publishMessage = async (
   key: string,
   topic: string,
 
-  onError: (errMsg: string) => void,
+  onError: (errMsg: ProKaaError) => void,
   updateLoading: (isLoading: boolean) => void,
   messageName?: string,
   protoFilePath?: string,
@@ -45,7 +46,7 @@ const publishMessage = async (
   try {
     await prokaaKafkaClient.sendMessage(key, topic, value);
   } catch (e) {
-    onError(e.message);
+    onError(e);
   }
 
   updateLoading(false);

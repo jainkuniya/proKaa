@@ -71,7 +71,7 @@ export default class ProkaaKafkaClient {
     value: Buffer | string
   ): Promise<RecordMetadata[]> => {
     if (!this.producer) {
-      throw Error('Not able to connect to the producer');
+      throw new ProKaaError('Not able to connect to the producer');
     }
 
     let records;
@@ -82,7 +82,7 @@ export default class ProkaaKafkaClient {
       });
     } catch (e) {
       await this.admin?.fetchTopicMetadata({ topics: [topic] });
-      throw e;
+      throw new ProKaaError(e.message);
     }
 
     // if consumer is not connected, connect it
