@@ -1,5 +1,5 @@
 import {
-  ProKaaConsumerState,
+  ProKaaKafkaClientState,
   ActionUpdateProtoFiles,
   ActionCleanAppCache,
   ProtoFile
@@ -26,7 +26,7 @@ export function cleanAction(): ActionCleanAppCache {
 }
 
 export function toggleIsConsumerConnectingAction(
-  consumerState: ProKaaConsumerState
+  consumerState: ProKaaKafkaClientState
 ): ActionCleanAppCache {
   return {
     type: TOGGLE_IS_CONSUMER_CONNECTING,

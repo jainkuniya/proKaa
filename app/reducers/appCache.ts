@@ -1,5 +1,5 @@
 import {
-  ProKaaConsumerState,
+  ProKaaKafkaClientState,
   ActionCleanAppCache,
   ActionUpdateProtoFiles,
   ActionUpdateConsumerStatus
@@ -11,7 +11,7 @@ import {
 } from './actionTypes';
 
 export default (
-  state = { protos: [], consumerState: ProKaaConsumerState.CONNECTING },
+  state = { protos: [], consumerState: ProKaaKafkaClientState.CONNECTING },
   action:
     | ActionCleanAppCache
     | ActionUpdateProtoFiles

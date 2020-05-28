@@ -25,13 +25,20 @@ export default class ProkaaKafkaClient {
   static instance?: ProkaaKafkaClient = undefined;
 
   static getInstance(kafkaHost?: string) {
-    if (!ProkaaKafkaClient.instance) {
+    if (
+      !ProkaaKafkaClient.instance ||
+      kafkaHost !== ProkaaKafkaClient.instance.getKafkaHost()
+    ) {
       if (!kafkaHost) {
         throw Error('kafkaHost cannot be undefined');
       }
       ProkaaKafkaClient.instance = new ProkaaKafkaClient(kafkaHost);
     }
     return ProkaaKafkaClient.instance;
+  }
+
+  getKafkaHost() {
+    return this.kafkaHost;
   }
 
   kafkaHost = 'localhost:9092';
@@ -88,7 +95,7 @@ export default class ProkaaKafkaClient {
     return records;
   };
 
-  connectProducer = (): Promise<void> => {
+  connectProducer = async (): Promise<void> => {
     this.producer = this.kafka?.producer({
       allowAutoTopicCreation: false,
       retry: {
@@ -96,12 +103,7 @@ export default class ProkaaKafkaClient {
       }
     });
 
-    return (
-      this.producer?.connect() ||
-      new Promise(() => {
-        throw Error('');
-      })
-    );
+    await this.producer?.connect();
   };
 
   handleMessage = (msg: ProKaaKafkaMessage) => {

@@ -27,14 +27,14 @@ export type ProtoFile = {
   data: ProtoData[];
 };
 
-export enum ProKaaConsumerState {
+export enum ProKaaKafkaClientState {
   CONNECTED,
   CONNECTING,
   ERROR
 }
 
 export type GlobalState = {
-  appCache: { protos: ProtoFile[]; consumerState: ProKaaConsumerState };
+  appCache: { protos: ProtoFile[]; consumerState: ProKaaKafkaClientState };
   appConfig: { protoEnabled: boolean; kafkaHost: string; kafkaTopic: string };
 };
 
@@ -49,7 +49,7 @@ export type ActionCleanAppCache = {
 
 export type ActionUpdateConsumerStatus = {
   type: typeof UPDATE_CONSUMER_STATE;
-  consumerState: ProKaaConsumerState;
+  consumerState: ProKaaKafkaClientState;
 };
 
 export type ActionToggleProtoEnabled = {

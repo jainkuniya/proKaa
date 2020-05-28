@@ -8,7 +8,11 @@ import ReactJson from 'react-json-view';
 import { v4 as uuidv4 } from 'uuid';
 import { Producer } from 'kafka-node';
 
-import { GlobalState, ProtoFile, ProKaaConsumerState } from '../reducers/types';
+import {
+  GlobalState,
+  ProtoFile,
+  ProKaaKafkaClientState
+} from '../reducers/types';
 import styles from './Home.css';
 import SideBar from './SideBar';
 
@@ -20,6 +24,7 @@ import {
 } from '../actions/appConfig';
 import ConsumerPanel from './ConsumerPanel';
 import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
+import { toggleIsConsumerConnectingAction } from '../actions/appCache';
 
 type State = {
   message: {
@@ -29,9 +34,9 @@ type State = {
   };
   kafkaHost: string;
   kafkaTopic: string;
-  isLoading: boolean;
   isSendMsgLoading: boolean;
-  isConnected: boolean;
+  kafkaClientState: ProKaaKafkaClientState;
+  prokaaKafkaClient?: ProkaaKafkaClient;
   error?: string;
   proto?: string;
   packageName?: string;
@@ -42,11 +47,12 @@ type State = {
 type Props = {
   kafkaHost: string;
   isProtoEnabled: boolean;
-  consumerState: ProKaaConsumerState;
+  consumerState: ProKaaKafkaClientState;
   protos: ProtoFile[];
   kafkaTopic: string;
   onKafkaTopicChange: (topic: string) => void;
   onKafkaHostChange: (kafkaHost: string) => void;
+  toggleIsConsumerConnecting: (consumerState: ProKaaKafkaClientState) => void;
 };
 
 class Home extends PureComponent<Props, State> {
@@ -55,16 +61,17 @@ class Home extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.connectKafka(props, props.kafkaHost);
-
     this.state = {
       kafkaHost: props.kafkaHost,
       kafkaTopic: props.kafkaTopic,
       message: { type: 'string', content: '' },
-      isLoading: false,
       isSendMsgLoading: false,
-      isConnected: false
+      kafkaClientState: ProKaaKafkaClientState.CONNECTING
     };
+  }
+
+  componentDidMount() {
+    this.connectKafka();
   }
 
   updateProducer = (newProducer?: Producer, error?: string) => {
@@ -101,15 +108,21 @@ class Home extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
-    if (!this.prokaaKafkaClient) {
+    const {
+      message,
+      messageName,
+      proto,
+      packageName,
+      prokaaKafkaClient
+    } = this.state;
+    if (!prokaaKafkaClient) {
       this.onError('please connect to the kafka');
       return;
     }
 
-    const { message, messageName, proto, packageName } = this.state;
     const { kafkaTopic } = this.props;
     publishMessage(
-      this.prokaaKafkaClient,
+      prokaaKafkaClient,
       message.content,
       uuidv4(),
       kafkaTopic,
@@ -127,21 +140,9 @@ class Home extends PureComponent<Props, State> {
     });
   };
 
-  toggleLoading = (isLoading: boolean) => {
-    this.setState({
-      isLoading
-    });
-  };
-
   toggleSendMsgLoading = (isSendMsgLoading: boolean) => {
     this.setState({
       isSendMsgLoading
-    });
-  };
-
-  toggleConnected = (isConnected: boolean) => {
-    this.setState({
-      isConnected
     });
   };
 
@@ -183,34 +184,31 @@ class Home extends PureComponent<Props, State> {
     this.setState({
       kafkaHost: event.target.value
     });
-    this.toggleConnected(false);
   };
 
-  connectKafka = (props: Props, kafkaHost: string) => {
-    const { onKafkaHostChange } = props;
-    this.prokaaKafkaClient = ProkaaKafkaClient.getInstance(kafkaHost);
+  connectKafka = async () => {
+    const { onKafkaHostChange, toggleIsConsumerConnecting } = this.props;
+    const { kafkaHost } = this.state;
+    const prokaaKafkaClient = ProkaaKafkaClient.getInstance(kafkaHost);
 
-    this.toggleLoading(true);
-    this.toggleConnected(false);
-
-    this.prokaaKafkaClient
-      ?.connectProducer()
-      .then(
-        () => {
-          this.toggleConnected(true);
-          this.onError('');
-          onKafkaHostChange(kafkaHost);
-        },
-        e => {
-          this.toggleConnected(false);
-          this.onError(e);
-        }
-      )
-      .catch(e => {
-        this.toggleConnected(false);
-        this.onError(e);
-      })
-      .finally(() => this.toggleLoading(false));
+    this.setState({
+      kafkaClientState: ProKaaKafkaClientState.CONNECTING
+    });
+    try {
+      await prokaaKafkaClient.connectProducer();
+      this.setState({
+        kafkaClientState: ProKaaKafkaClientState.CONNECTED,
+        prokaaKafkaClient
+      });
+      onKafkaHostChange(kafkaHost);
+    } catch (e) {
+      toggleIsConsumerConnecting(ProKaaKafkaClientState.ERROR);
+      this.setState({
+        error: e,
+        kafkaClientState: ProKaaKafkaClientState.ERROR,
+        prokaaKafkaClient: undefined
+      });
+    }
   };
 
   render() {
@@ -218,15 +216,30 @@ class Home extends PureComponent<Props, State> {
       kafkaHost,
       kafkaTopic,
       message,
-      isLoading,
-      isConnected,
       error,
       messageName,
       proto,
       packageName,
-      isSendMsgLoading
+      isSendMsgLoading,
+      kafkaClientState,
+      prokaaKafkaClient
     } = this.state;
     const { consumerState, isProtoEnabled } = this.props;
+    const isKafkaHostInputDisabled =
+      kafkaClientState === ProKaaKafkaClientState.CONNECTING;
+    const isKafkaHostButtonDisabeld =
+      kafkaClientState === ProKaaKafkaClientState.CONNECTED &&
+      // eslint-disable-next-line react/destructuring-assignment
+      kafkaHost === this.props.kafkaHost;
+
+    const iskafkaHostConnecting =
+      kafkaClientState === ProKaaKafkaClientState.CONNECTING;
+
+    const iskafkaHostConnected =
+      kafkaClientState === ProKaaKafkaClientState.CONNECTED;
+    // eslint-disable-next-line react/destructuring-assignment
+    const isKafkaHostCanBeConnected = kafkaHost === this.props.kafkaHost;
+
     return (
       <div className={styles.container} data-tid="container">
         <div className={styles.sideBar}>
@@ -243,23 +256,27 @@ class Home extends PureComponent<Props, State> {
                 onChange={e => {
                   this.handleKafkaHostChange(e);
                 }}
-                disabled={isLoading}
+                disabled={isKafkaHostInputDisabled}
               />
               <Button
                 className={styles.connectButton}
                 type="button"
-                onClick={this.connectKafka}
+                onClick={() => this.connectKafka()}
                 style={{
                   backgroundColor: '#E91E63',
                   color: '#fff',
                   marginLeft: '2px'
                 }}
-                disabled={isLoading}
+                disabled={isKafkaHostButtonDisabeld}
               >
-                {isLoading ? (
-                  <ClipLoader size={20} color="#ffffff" loading={isLoading} />
+                {iskafkaHostConnecting ? (
+                  <ClipLoader size={20} color="#ffffff" loading />
                 ) : (
-                  <span>{isConnected ? 'Connected' : 'connect'}</span>
+                  <span>
+                    {iskafkaHostConnected && isKafkaHostCanBeConnected
+                      ? '✓'
+                      : 'Connect'}
+                  </span>
                 )}
               </Button>
             </span>
@@ -269,7 +286,7 @@ class Home extends PureComponent<Props, State> {
                 value={kafkaTopic}
                 className={styles.topicInput}
                 placeholder="topic"
-                disabled={consumerState === ProKaaConsumerState.CONNECTING}
+                disabled={consumerState === ProKaaKafkaClientState.CONNECTING}
                 onChange={e => {
                   this.handleTopicChange(e);
                 }}
@@ -284,20 +301,22 @@ class Home extends PureComponent<Props, State> {
                   marginLeft: '2px'
                 }}
                 disabled={
-                  consumerState === ProKaaConsumerState.CONNECTED &&
+                  consumerState === ProKaaKafkaClientState.CONNECTED &&
                   // eslint-disable-next-line react/destructuring-assignment
                   kafkaTopic === this.props.kafkaTopic
                 }
               >
-                {consumerState === ProKaaConsumerState.CONNECTING ? (
+                {consumerState === ProKaaKafkaClientState.CONNECTING ? (
                   <ClipLoader
                     size={20}
                     color="#ffffff"
-                    loading={consumerState === ProKaaConsumerState.CONNECTING}
+                    loading={
+                      consumerState === ProKaaKafkaClientState.CONNECTING
+                    }
                   />
                 ) : (
                   <span>
-                    {consumerState === ProKaaConsumerState.CONNECTED &&
+                    {consumerState === ProKaaKafkaClientState.CONNECTED &&
                     // eslint-disable-next-line react/destructuring-assignment
                     kafkaTopic === this.props.kafkaTopic
                       ? '✓'
@@ -359,6 +378,7 @@ class Home extends PureComponent<Props, State> {
             </div>
             <div className={styles.consumerPanel}>
               <ConsumerPanel
+                prokaaKafkaClient={prokaaKafkaClient}
                 msgName={messageName}
                 protoFile={proto}
                 pkgName={packageName}
@@ -388,7 +408,8 @@ function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators(
     {
       onKafkaTopicChange: updateKafkaTopicAction,
-      onKafkaHostChange: updateKafkaHostAction
+      onKafkaHostChange: updateKafkaHostAction,
+      toggleIsConsumerConnecting: toggleIsConsumerConnectingAction
     },
     dispatch
   );

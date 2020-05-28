@@ -6,7 +6,7 @@ import ReactJson from 'react-json-view';
 import Protobuf, { Root } from 'protobufjs';
 
 import styles from './Home.css';
-import { GlobalState, ProKaaConsumerState } from '../reducers/types';
+import { GlobalState, ProKaaKafkaClientState } from '../reducers/types';
 import { toggleIsConsumerConnectingAction } from '../actions/appCache';
 import ProkaaKafkaClient, {
   ProKaaError,
@@ -28,15 +28,18 @@ type Props = {
   msgName?: string;
   protoFile?: string;
   pkgName?: string;
+  prokaaKafkaClient?: ProkaaKafkaClient;
 
   isProtoEnabled: boolean;
   kafkaTopic: string;
   kafkaHost: string;
-  toggleIsConsumerConnecting: (consumerState: ProKaaConsumerState) => void;
+  toggleIsConsumerConnecting: (consumerState: ProKaaKafkaClientState) => void;
 };
 
 class ConsumerPanel extends PureComponent<Props, State> {
   root?: Root;
+
+  isSubscribed = false;
 
   constructor(props: Props) {
     super(props);
@@ -46,18 +49,18 @@ class ConsumerPanel extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { protoFile } = this.props;
+    const { protoFile, prokaaKafkaClient } = this.props;
 
-    this.connectConsumer();
-    ProkaaKafkaClient.getInstance().addConsumer(this.onMessage);
-
+    if (prokaaKafkaClient) {
+      this.connectConsumer();
+    }
     if (protoFile) {
       this.root = await Protobuf.load(protoFile);
     }
   }
 
   async componentDidUpdate(prevProps: Props) {
-    const { protoFile, kafkaTopic } = this.props;
+    const { protoFile, kafkaTopic, prokaaKafkaClient } = this.props;
 
     if (protoFile !== prevProps.protoFile && protoFile) {
       this.root = await Protobuf.load(protoFile);
@@ -66,17 +69,32 @@ class ConsumerPanel extends PureComponent<Props, State> {
     if (kafkaTopic !== prevProps.kafkaTopic && kafkaTopic) {
       this.connectConsumer();
     }
+
+    if (prokaaKafkaClient !== prevProps.prokaaKafkaClient) {
+      this.connectConsumer();
+    }
   }
 
   connectConsumer = async () => {
-    const { kafkaTopic, toggleIsConsumerConnecting } = this.props;
+    const {
+      kafkaTopic,
+      toggleIsConsumerConnecting,
+      prokaaKafkaClient
+    } = this.props;
+    if (!prokaaKafkaClient) {
+      return;
+    }
     try {
-      toggleIsConsumerConnecting(ProKaaConsumerState.CONNECTING);
-      await ProkaaKafkaClient.getInstance().connectConsumer(kafkaTopic, false);
-      toggleIsConsumerConnecting(ProKaaConsumerState.CONNECTED);
+      toggleIsConsumerConnecting(ProKaaKafkaClientState.CONNECTING);
+      await prokaaKafkaClient.connectConsumer(kafkaTopic, false);
+      if (!this.isSubscribed) {
+        prokaaKafkaClient.addConsumer(this.onMessage);
+        this.isSubscribed = true;
+      }
+      toggleIsConsumerConnecting(ProKaaKafkaClientState.CONNECTED);
       this.onError();
     } catch (e) {
-      toggleIsConsumerConnecting(ProKaaConsumerState.ERROR);
+      toggleIsConsumerConnecting(ProKaaKafkaClientState.ERROR);
       this.onError({
         message: `Unable to create consumer: ${e.type} ${kafkaTopic}`,
         onRetry: e.retriable
