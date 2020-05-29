@@ -168,7 +168,7 @@ class Home extends PureComponent<Props, State> {
         packageName
       });
     } catch (e) {
-      this.setState({ error: e.message });
+      this.setState({ error: e });
     }
   };
 
