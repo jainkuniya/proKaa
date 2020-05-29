@@ -83,7 +83,7 @@ class SideBar extends PureComponent<Props> {
   render() {
     const { onMessageItemSelect, isProtoEnabled, protos } = this.props;
     return (
-      <div>
+      <div className={styles.sideBar}>
         <div className={styles.wrapper}>
           <div className={styles.header}>
             <div className={styles.headerTextWrapper}>

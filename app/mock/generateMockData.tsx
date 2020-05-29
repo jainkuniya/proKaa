@@ -1,5 +1,6 @@
 import getMockValueFor from './mockValues';
 import { ProtoData, ProtoMessageFields, ProtoMessage } from '../reducers/types';
+import ProKaaError from '../ProKaaError';
 
 const getMsgFields = (
   msgName: string,
@@ -88,7 +89,9 @@ const generateMockData = (
   }
 
   if (!fields) {
-    throw Error(`Can not find ${msgName}`);
+    throw new ProKaaError(
+      `Can not find ${msgName} while constructing ${msgName}`
+    );
   }
 
   if (Object.keys(fields).length === 0) {

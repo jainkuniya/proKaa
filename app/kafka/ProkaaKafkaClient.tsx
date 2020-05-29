@@ -58,6 +58,7 @@ export default class ProkaaKafkaClient {
         retries: 0
       }
     });
+
     this.admin = this.kafka.admin();
   }
 
