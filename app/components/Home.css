@@ -28,7 +28,7 @@
 .rightPanel {
   display: flex;
   flex-direction: column;
-  flex: 15;
+  flex: 8;
   margin-top: -1vh;
 }
 
