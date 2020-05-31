@@ -1,23 +1,31 @@
 import React, { PureComponent } from 'react';
 
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 import styles from './Proto.css';
-import { ProtoFile, ProtoData, ProtoMessage } from '../reducers/types';
+import {
+  ProtoFile,
+  ProtoData,
+  ProtoMessage,
+  Dispatch
+} from '../reducers/types';
+import { onSideBarItemSelectAction } from '../actions/appCache';
 
 type Props = {
   proto: ProtoFile;
-  onMessageItemSelect: (
+  onSideBarItemSelect: (
     messageName: string,
     fileName: string,
     packageName: string
   ) => void;
 };
 
-export default class Proto extends PureComponent<Props> {
+class Proto extends PureComponent<Props> {
   renderMessageList = (
     data: ProtoData[] | ProtoMessage[],
     pkgName?: string
   ) => {
-    const { proto, onMessageItemSelect } = this.props;
+    const { proto, onSideBarItemSelect } = this.props;
     return data.map(item => {
       if (item.packageName && !item.name) {
         return (
@@ -42,11 +50,11 @@ export default class Proto extends PureComponent<Props> {
           key={`${proto.filepath}.${pkgName}.${item.name}`}
           className={styles.message}
           onKeyPress={
-            () => onMessageItemSelect(item.name, proto.filepath, pkgName)
+            () => onSideBarItemSelect(proto.filepath, pkgName, item.name)
             // eslint-disable-next-line react/jsx-curly-newline
           }
           onClick={
-            () => onMessageItemSelect(item.name, proto.filepath, pkgName)
+            () => onSideBarItemSelect(proto.filepath, pkgName, item.name)
             // eslint-disable-next-line react/jsx-curly-newline
           }
         >
@@ -73,3 +81,12 @@ export default class Proto extends PureComponent<Props> {
     );
   }
 }
+
+export default connect(null, (dispatch: Dispatch) => {
+  return bindActionCreators(
+    {
+      onSideBarItemSelect: onSideBarItemSelectAction
+    },
+    dispatch
+  );
+})(Proto);

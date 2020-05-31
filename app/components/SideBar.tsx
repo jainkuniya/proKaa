@@ -19,11 +19,6 @@ type Props = {
   updateProtoFiles: (files: ProtoFile[]) => void;
   cleanAppCacheAction: () => void;
   handleEnableProtoToggleChange: (isEnabled: boolean) => void;
-  onMessageItemSelect: (
-    messageName: string,
-    fileName: string,
-    packageName: string
-  ) => void;
 };
 
 const decodeProtoFile = async (filePath: string) => {
@@ -81,7 +76,7 @@ class SideBar extends PureComponent<Props> {
   };
 
   render() {
-    const { onMessageItemSelect, isProtoEnabled, protos } = this.props;
+    const { isProtoEnabled, protos } = this.props;
     return (
       <div className={styles.sideBar}>
         <div className={styles.wrapper}>
@@ -136,11 +131,7 @@ class SideBar extends PureComponent<Props> {
           </div>
           <div className={styles.list}>
             {Object.keys(protos).map(id => (
-              <Proto
-                key={id}
-                proto={protos[parseInt(id, 10)]}
-                onMessageItemSelect={onMessageItemSelect}
-              />
+              <Proto key={id} proto={protos[parseInt(id, 10)]} />
             ))}
           </div>
         </div>

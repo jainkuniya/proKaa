@@ -5,9 +5,15 @@ import { configureStore, history } from './store/configureStore';
 
 import './app.global.css';
 import Root from './containers/Root';
+import { ProKaaKafkaClientState } from './reducers/types';
 
 const store = configureStore({
-  appCache: { protos: [] },
+  appCache: {
+    protos: [],
+    error: undefined,
+    message: { value: '' },
+    consumerState: ProKaaKafkaClientState.CONNECTING
+  },
   appConfig: {
     protoEnabled: false,
     kafkaHost: 'localhost:9092',

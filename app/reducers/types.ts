@@ -1,6 +1,9 @@
 import { Dispatch as ReduxDispatch, Store as ReduxStore } from 'redux';
 import { Field, MapField } from 'protobufjs';
+import { ProKaaMessage } from '../components/types';
 import {
+  SIDE_BAR_ITEM_SELECT,
+  UPDATE_MESSAGE,
   TOGGLE_IS_CONSUMER_CONNECTING as UPDATE_CONSUMER_STATE,
   UPDATE_KAFKA_TOPIC,
   UPDATE_KAFKA_HOST,
@@ -8,6 +11,7 @@ import {
   CLEAN_APP_CACHE,
   TOGGLE_PROTO_ENABLED
 } from './actionTypes';
+import ProKaaError from '../ProKaaError';
 
 export type ProtoMessageFields = { [string]: Field | MapField };
 
@@ -34,7 +38,12 @@ export enum ProKaaKafkaClientState {
 }
 
 export type GlobalState = {
-  appCache: { protos: ProtoFile[]; consumerState: ProKaaKafkaClientState };
+  appCache: {
+    protos: ProtoFile[];
+    consumerState: ProKaaKafkaClientState;
+    message: ProKaaMessage;
+    error?: ProKaaError;
+  };
   appConfig: { protoEnabled: boolean; kafkaHost: string; kafkaTopic: string };
 };
 
@@ -50,6 +59,18 @@ export type ActionCleanAppCache = {
 export type ActionUpdateConsumerStatus = {
   type: typeof UPDATE_CONSUMER_STATE;
   consumerState: ProKaaKafkaClientState;
+};
+
+export type ActionUpdateMessage = {
+  type: typeof UPDATE_MESSAGE;
+  message: ProKaaMessage;
+};
+
+export type ActionSideBarItemSelect = {
+  type: typeof SIDE_BAR_ITEM_SELECT;
+  protoPath: string;
+  packageName: string;
+  name: string;
 };
 
 export type ActionToggleProtoEnabled = {
