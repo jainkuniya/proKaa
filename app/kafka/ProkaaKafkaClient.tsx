@@ -55,10 +55,7 @@ export default class ProkaaKafkaClient {
 
     this.kafka = new Kafka({
       clientId: `prokaa-${uuidv4()}`,
-      brokers: [this.kafkaHost],
-      retry: {
-        retries: 0
-      }
+      brokers: [this.kafkaHost]
     });
 
     this.admin = this.kafka.admin();
@@ -98,10 +95,7 @@ export default class ProkaaKafkaClient {
   connectProducer = async (): Promise<void> => {
     try {
       this.producer = this.kafka?.producer({
-        allowAutoTopicCreation: false,
-        retry: {
-          retries: 0
-        }
+        allowAutoTopicCreation: false
       });
 
       await this.producer?.connect();
