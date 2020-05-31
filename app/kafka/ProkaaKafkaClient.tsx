@@ -38,6 +38,8 @@ export default class ProkaaKafkaClient {
 
   kafkaHost = 'localhost:9092';
 
+  groupId = `prokaa-${uuidv4()}`;
+
   kafka?: Kafka;
 
   admin?: Admin;
@@ -82,7 +84,6 @@ export default class ProkaaKafkaClient {
         messages: [{ key, value }]
       });
     } catch (e) {
-      await this.admin?.fetchTopicMetadata({ topics: [topic] });
       throw new ProKaaError(e.message);
     }
 
@@ -118,10 +119,11 @@ export default class ProkaaKafkaClient {
       await this.disconnectConsumer();
 
       this.consumer = this.kafka?.consumer({
-        groupId: `prokaa-${uuidv4()}`,
+        groupId: this.groupId,
         allowAutoTopicCreation: false
       });
       await this.consumer?.connect();
+
       await this.consumer?.subscribe({
         topic,
         fromBeginning
@@ -134,8 +136,34 @@ export default class ProkaaKafkaClient {
     } catch (e) {
       // rollback changes
       this.disconnectConsumer();
-      throw new ProKaaError(`Unable to create consumer: ${e.type} ${topic}`);
+      throw new ProKaaError(`Unable to create consumer: ${e.message}`);
     }
+  };
+
+  updateOffset = async (
+    topic: string,
+    offset: string,
+    onComplete: () => void
+  ) => {
+    const response = await this.admin?.fetchTopicMetadata({
+      topics: [topic]
+    });
+    const partitions = response.topics[0].partitions.map(partition => ({
+      partition: partition.partitionId,
+      offset
+    }));
+    await this.consumer?.stop();
+    await this.admin?.setOffsets({
+      groupId: this.groupId,
+      topic,
+      partitions
+    });
+    onComplete();
+    await this.consumer?.run({
+      eachMessage: async ({ partition, message }) => {
+        this.handleMessage({ message, partition, topic });
+      }
+    });
   };
 
   disconnectConsumer = async () => {

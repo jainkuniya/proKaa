@@ -13,6 +13,7 @@ import ProkaaKafkaClient, {
 } from '../kafka/ProkaaKafkaClient';
 
 import ProKaaError from '../ProKaaError';
+import InputField from './InputField';
 
 type State = {
   error?: ProKaaError;
@@ -23,6 +24,7 @@ type State = {
     topic: string;
     partition: number;
   }>;
+  isUpdatingOffset: boolean;
 };
 
 type Props = {
@@ -45,7 +47,8 @@ class ConsumerPanel extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      messages: []
+      messages: [],
+      isUpdatingOffset: false
     };
   }
 
@@ -125,10 +128,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
             ...messages
           ]
         });
-        this.onError({
-          message: 'Select proto message to decode',
-          autoHideDuration: 2000
-        });
+        this.onError(new ProKaaError('Select proto message to decode'));
       }
     } else {
       this.setState({
@@ -151,15 +151,59 @@ class ConsumerPanel extends PureComponent<Props, State> {
     });
   };
 
+  updateOffset = (offset: string) => {
+    const { kafkaTopic, prokaaKafkaClient } = this.props;
+
+    if (!offset) {
+      this.onError(new ProKaaError('Invalid  offset'));
+      return;
+    }
+
+    if (!prokaaKafkaClient) {
+      this.onError(new ProKaaError('Not able to connect to kafka'));
+      return;
+    }
+
+    this.setState({
+      isUpdatingOffset: true,
+      messages: []
+    });
+
+    try {
+      prokaaKafkaClient.updateOffset(kafkaTopic, offset, () =>
+        this.setState({
+          isUpdatingOffset: false
+        })
+      );
+    } catch (e) {
+      this.setState({
+        isUpdatingOffset: false
+      });
+      this.onError(e);
+    }
+  };
+
   render() {
-    const { messages, error } = this.state;
+    const { messages, error, isUpdatingOffset } = this.state;
     return (
       <div className={styles.consumerPanelWrapper}>
         <div className={styles.panelHeading}>Kafka Consumer</div>
+        <InputField
+          actionText="Update"
+          label="Offset:"
+          initialValue="latest"
+          onSubmit={this.updateOffset}
+          isInputDisable={isUpdatingOffset}
+          isSubmitDisable={isUpdatingOffset}
+          isLoading={isUpdatingOffset}
+        />
         <div className={styles.messagesWrapper}>
           {messages.map(msg => {
             return (
-              <div className={styles.consumnerMsgContainer} key={msg.offset}>
+              <div
+                className={styles.consumnerMsgContainer}
+                key={`${msg.topic}:${msg.partition}:${msg.offset}`}
+              >
                 <p className={styles.offsetText}>
                   {`Topic: ${msg.topic} Partition: ${msg.partition} Offset: ${msg.offset}`}
                 </p>
