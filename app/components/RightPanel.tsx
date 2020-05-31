@@ -3,11 +3,7 @@ import Alert from '@material-ui/lab/Alert';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 
-import {
-  GlobalState,
-  ProtoFile,
-  ProKaaKafkaClientState
-} from '../reducers/types';
+import { GlobalState, ProKaaKafkaClientState } from '../reducers/types';
 import styles from './Home.css';
 
 import {
@@ -28,9 +24,7 @@ type State = {
 
 type Props = {
   kafkaHost: string;
-  isProtoEnabled: boolean;
   consumerState: ProKaaKafkaClientState;
-  protos: ProtoFile[];
   kafkaTopic: string;
   onKafkaTopicChange: (topic: string) => void;
   onKafkaHostChange: (kafkaHost: string) => void;
@@ -125,8 +119,6 @@ export default connect(
   (state: GlobalState) => {
     return {
       kafkaHost: state.appConfig.kafkaHost,
-      isProtoEnabled: state.appConfig.protoEnabled,
-      protos: state.appCache.protos,
       kafkaTopic: state.appConfig.kafkaTopic,
       consumerState: state.appCache.consumerState
     };
