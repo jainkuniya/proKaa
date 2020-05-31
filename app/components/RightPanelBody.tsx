@@ -1,11 +1,7 @@
 import React, { PureComponent } from 'react';
-import Alert from '@material-ui/lab/Alert';
-import Fab from '@material-ui/core/Fab';
-import ClipLoader from 'react-spinners/ClipLoader';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
-import { v4 as uuidv4 } from 'uuid';
 
 import { GlobalState } from '../reducers/types';
 import styles from './Home.css';
@@ -13,36 +9,18 @@ import styles from './Home.css';
 import ConsumerPanel from './ConsumerPanel';
 import { updateMessageAction } from '../actions/appCache';
 import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
-import ProKaaError from '../ProKaaError';
 import { ProKaaMessage } from './types';
-import publishMessage from '../kafka/publishMessage';
-
-type State = {
-  isSendMsgLoading: boolean;
-  error?: ProKaaError;
-};
+import SendButton from './SendButton';
 
 type Props = {
   message: ProKaaMessage;
-  error?: ProKaaError;
   prokaaKafkaClient?: ProkaaKafkaClient;
   kafkaHost: string;
   kafkaTopic: string;
   updateMessage: (message: ProKaaMessage) => void;
 };
 
-class RightPanelBody extends PureComponent<Props, State> {
-  prokaaKafkaClient?: ProkaaKafkaClient;
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      error: props.error,
-      isSendMsgLoading: false
-    };
-  }
-
+class RightPanelBody extends PureComponent<Props> {
   handleMessageChange = (event: { target: { value: string } }) => {
     const { updateMessage } = this.props;
     updateMessage({ value: event.target.value });
@@ -54,41 +32,7 @@ class RightPanelBody extends PureComponent<Props, State> {
     updateMessage({ ...message, value: edit.updated_src });
   };
 
-  sendMessage = async () => {
-    const { message, prokaaKafkaClient } = this.props;
-    if (!prokaaKafkaClient) {
-      this.onError(new ProKaaError('please connect to the kafka'));
-      return;
-    }
-
-    const { kafkaTopic } = this.props;
-    publishMessage(
-      prokaaKafkaClient,
-      message.value,
-      uuidv4(),
-      kafkaTopic,
-      error => this.setState({ error }),
-      this.toggleSendMsgLoading,
-      message.name,
-      message.protoPath,
-      message.packageName
-    );
-  };
-
-  onError = (error: ProKaaError) => {
-    this.setState({
-      error
-    });
-  };
-
-  toggleSendMsgLoading = (isSendMsgLoading: boolean) => {
-    this.setState({
-      isSendMsgLoading
-    });
-  };
-
   render() {
-    const { isSendMsgLoading, error } = this.state;
     const { message, prokaaKafkaClient } = this.props;
 
     return (
@@ -117,27 +61,7 @@ class RightPanelBody extends PureComponent<Props, State> {
               />
             )}
           </div>
-          <div className={styles.separator}>
-            <Fab
-              className={styles.pushButton}
-              type="button"
-              onClick={this.sendMessage}
-              size="large"
-              style={{
-                color: 'white',
-                backgroundColor: 'rgb(245, 0, 87)',
-                padding: 36,
-                lineHeight: 0
-              }}
-            >
-              {!isSendMsgLoading && <span>Push</span>}
-              <ClipLoader
-                size={20}
-                color="#ffffff"
-                loading={isSendMsgLoading}
-              />
-            </Fab>
-          </div>
+          <SendButton prokaaKafkaClient={prokaaKafkaClient} />
           <div className={styles.consumerPanel}>
             <ConsumerPanel
               prokaaKafkaClient={prokaaKafkaClient}
@@ -147,7 +71,6 @@ class RightPanelBody extends PureComponent<Props, State> {
             />
           </div>
         </div>
-        {error && <Alert severity="error">{error.message}</Alert>}
       </div>
     );
   }

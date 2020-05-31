@@ -1,20 +1,22 @@
 import { ProKaaMessage } from '../components/types';
 import {
-  ActionSideBarItemSelect,
-  ActionUpdateMessage,
-  ProKaaKafkaClientState,
-  ActionUpdateProtoFiles,
-  ActionCleanAppCache,
-  ProtoFile
-} from '../reducers/types';
-
-import {
+  UPDATE_ERROR,
   UPDATE_MESSAGE,
   UPDATE_PROTO_PATH,
   CLEAN_APP_CACHE,
   TOGGLE_IS_CONSUMER_CONNECTING,
   SIDE_BAR_ITEM_SELECT
 } from '../reducers/actionTypes';
+import {
+  ActionSideBarItemSelect,
+  ActionUpdateMessage,
+  ProKaaKafkaClientState,
+  ActionUpdateProtoFiles,
+  ActionCleanAppCache,
+  ProtoFile,
+  ActionUpdateError
+} from '../reducers/types';
+import ProKaaError from '../ProKaaError';
 
 export function updateProtoPathsAction(
   updatedProtos: ProtoFile[]
@@ -46,6 +48,13 @@ export function updateMessageAction(
   return {
     type: UPDATE_MESSAGE,
     message
+  };
+}
+
+export function updateErrorAction(error?: ProKaaError): ActionUpdateError {
+  return {
+    type: UPDATE_ERROR,
+    error
   };
 }
 

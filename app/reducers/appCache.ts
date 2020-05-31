@@ -1,5 +1,6 @@
 import generateMockData from '../mock/generateMockData';
 import {
+  UPDATE_ERROR,
   TOGGLE_PROTO_ENABLED,
   SIDE_BAR_ITEM_SELECT,
   UPDATE_PROTO_PATH,
@@ -8,6 +9,7 @@ import {
   UPDATE_MESSAGE
 } from './actionTypes';
 import {
+  ActionUpdateError,
   ActionToggleProtoEnabled,
   ActionSideBarItemSelect,
   ActionUpdateMessage,
@@ -31,6 +33,7 @@ export default (
     | ActionUpdateMessage
     | ActionSideBarItemSelect
     | ActionToggleProtoEnabled
+    | ActionUpdateError
 ) => {
   switch (action.type) {
     case UPDATE_PROTO_PATH: {
@@ -53,6 +56,9 @@ export default (
     }
     case UPDATE_MESSAGE: {
       return { ...state, message: action.message };
+    }
+    case UPDATE_ERROR: {
+      return { ...state, error: action.error };
     }
     case SIDE_BAR_ITEM_SELECT: {
       const { protos } = state;

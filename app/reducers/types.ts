@@ -9,7 +9,8 @@ import {
   UPDATE_KAFKA_HOST,
   UPDATE_PROTO_PATH,
   CLEAN_APP_CACHE,
-  TOGGLE_PROTO_ENABLED
+  TOGGLE_PROTO_ENABLED,
+  UPDATE_ERROR
 } from './actionTypes';
 import ProKaaError from '../ProKaaError';
 
@@ -64,6 +65,11 @@ export type ActionUpdateConsumerStatus = {
 export type ActionUpdateMessage = {
   type: typeof UPDATE_MESSAGE;
   message: ProKaaMessage;
+};
+
+export type ActionUpdateError = {
+  type: typeof UPDATE_ERROR;
+  error?: ProKaaError;
 };
 
 export type ActionSideBarItemSelect = {

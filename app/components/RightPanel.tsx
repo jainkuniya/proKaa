@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import Alert from '@material-ui/lab/Alert';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 
@@ -10,16 +9,19 @@ import {
   updateKafkaTopicAction,
   updateKafkaHostAction
 } from '../actions/appConfig';
-import { toggleIsConsumerConnectingAction } from '../actions/appCache';
+import {
+  toggleIsConsumerConnectingAction,
+  updateErrorAction
+} from '../actions/appCache';
 import InputField from './InputField';
 import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
 import ProKaaError from '../ProKaaError';
 import RightPanelBody from './RightPanelBody';
+import ErrorBar from './ErrorBar';
 
 type State = {
   kafkaClientState: ProKaaKafkaClientState;
   prokaaKafkaClient?: ProkaaKafkaClient;
-  error?: ProKaaError;
 };
 
 type Props = {
@@ -29,6 +31,7 @@ type Props = {
   onKafkaTopicChange: (topic: string) => void;
   onKafkaHostChange: (kafkaHost: string) => void;
   toggleIsConsumerConnecting: (consumerState: ProKaaKafkaClientState) => void;
+  updateError: (error?: ProKaaError) => void;
 };
 
 class RightPanel extends PureComponent<Props, State> {
@@ -53,7 +56,11 @@ class RightPanel extends PureComponent<Props, State> {
   };
 
   connectKafka = async (kafkaHost: string) => {
-    const { onKafkaHostChange, toggleIsConsumerConnecting } = this.props;
+    const {
+      onKafkaHostChange,
+      toggleIsConsumerConnecting,
+      updateError
+    } = this.props;
     const prokaaKafkaClient = ProkaaKafkaClient.getInstance(kafkaHost);
 
     this.setState({
@@ -62,23 +69,23 @@ class RightPanel extends PureComponent<Props, State> {
     try {
       await prokaaKafkaClient.connectProducer();
       this.setState({
-        error: undefined,
         kafkaClientState: ProKaaKafkaClientState.CONNECTED,
         prokaaKafkaClient
       });
+      updateError();
       onKafkaHostChange(kafkaHost);
     } catch (e) {
       toggleIsConsumerConnecting(ProKaaKafkaClientState.ERROR);
       this.setState({
-        error: e,
         kafkaClientState: ProKaaKafkaClientState.ERROR,
         prokaaKafkaClient: undefined
       });
+      updateError(e);
     }
   };
 
   render() {
-    const { error, kafkaClientState, prokaaKafkaClient } = this.state;
+    const { kafkaClientState, prokaaKafkaClient } = this.state;
     const { consumerState, kafkaHost, kafkaTopic } = this.props;
     const isKafkaHostInputDisabled =
       kafkaClientState === ProKaaKafkaClientState.CONNECTING;
@@ -109,7 +116,7 @@ class RightPanel extends PureComponent<Props, State> {
           isLoading={consumerState === ProKaaKafkaClientState.CONNECTING}
         />
         <RightPanelBody prokaaKafkaClient={prokaaKafkaClient} />
-        {error && <Alert severity="error">{error.message}</Alert>}
+        <ErrorBar />
       </div>
     );
   }
@@ -128,7 +135,8 @@ export default connect(
       {
         onKafkaTopicChange: updateKafkaTopicAction,
         onKafkaHostChange: updateKafkaHostAction,
-        toggleIsConsumerConnecting: toggleIsConsumerConnectingAction
+        toggleIsConsumerConnecting: toggleIsConsumerConnectingAction,
+        updateError: updateErrorAction
       },
       dispatch
     );
