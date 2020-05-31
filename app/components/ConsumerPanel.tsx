@@ -105,6 +105,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
 
   onMessage = ({ message, partition, topic }: ProKaaKafkaMessage) => {
     const { messages } = this.state;
+    const oldMessages = messages.slice(0, 10);
     const { pkgName, msgName, isProtoEnabled } = this.props;
     if (this.root && isProtoEnabled) {
       const protoMessage = this.root.lookupType(`${pkgName}.${msgName}`);
@@ -113,7 +114,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
         this.setState({
           messages: [
             { content: decodeMsg, offset: message.offset, partition, topic },
-            ...messages
+            ...oldMessages
           ]
         });
       } catch (e) {
@@ -125,7 +126,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
               partition,
               topic
             },
-            ...messages
+            ...oldMessages
           ]
         });
         this.onError(new ProKaaError('Select proto message to decode'));
@@ -139,7 +140,7 @@ class ConsumerPanel extends PureComponent<Props, State> {
             partition,
             topic
           },
-          ...messages
+          ...oldMessages
         ]
       });
     }
