@@ -1,5 +1,6 @@
 import generateMockData from '../mock/generateMockData';
 import {
+  TOGGLE_PROTO_ENABLED,
   SIDE_BAR_ITEM_SELECT,
   UPDATE_PROTO_PATH,
   CLEAN_APP_CACHE,
@@ -7,6 +8,7 @@ import {
   UPDATE_MESSAGE
 } from './actionTypes';
 import {
+  ActionToggleProtoEnabled,
   ActionSideBarItemSelect,
   ActionUpdateMessage,
   ProKaaKafkaClientState,
@@ -28,12 +30,19 @@ export default (
     | ActionUpdateConsumerStatus
     | ActionUpdateMessage
     | ActionSideBarItemSelect
+    | ActionToggleProtoEnabled
 ) => {
   switch (action.type) {
     case UPDATE_PROTO_PATH: {
       return {
         ...state,
         protos: [...state.protos, ...action.updatedProtos]
+      };
+    }
+    case TOGGLE_PROTO_ENABLED: {
+      return {
+        ...state,
+        message: action.enabled ? { value: {} } : { value: '' }
       };
     }
     case CLEAN_APP_CACHE: {

@@ -1,13 +1,15 @@
 import {
-  TOGGLE_PROTO_ENABLED,
-  UPDATE_KAFKA_HOST,
-  UPDATE_KAFKA_TOPIC
-} from './actionTypes';
-import {
+  ActionSideBarItemSelect,
   ActionToggleProtoEnabled,
   ActionUpdateKafkaHost,
   ActionUpdateKafkaTopic
 } from './types';
+import {
+  SIDE_BAR_ITEM_SELECT,
+  TOGGLE_PROTO_ENABLED,
+  UPDATE_KAFKA_HOST,
+  UPDATE_KAFKA_TOPIC
+} from './actionTypes';
 
 export default (
   state = {
@@ -19,8 +21,11 @@ export default (
     | ActionToggleProtoEnabled
     | ActionUpdateKafkaHost
     | ActionUpdateKafkaTopic
+    | ActionSideBarItemSelect
 ) => {
   switch (action.type) {
+    case SIDE_BAR_ITEM_SELECT:
+      return { ...state, protoEnabled: true };
     case TOGGLE_PROTO_ENABLED:
       return { ...state, protoEnabled: action.enabled };
     case UPDATE_KAFKA_HOST:

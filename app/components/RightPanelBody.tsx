@@ -7,26 +7,15 @@ import { connect } from 'react-redux';
 import ReactJson from 'react-json-view';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  GlobalState,
-  ProtoFile,
-  ProKaaKafkaClientState
-} from '../reducers/types';
+import { GlobalState } from '../reducers/types';
 import styles from './Home.css';
 
-import publishMessage from '../kafka/publishMessage';
-import {
-  updateKafkaTopicAction,
-  updateKafkaHostAction
-} from '../actions/appConfig';
 import ConsumerPanel from './ConsumerPanel';
-import {
-  toggleIsConsumerConnectingAction,
-  updateMessageAction
-} from '../actions/appCache';
+import { updateMessageAction } from '../actions/appCache';
 import ProkaaKafkaClient from '../kafka/ProkaaKafkaClient';
 import ProKaaError from '../ProKaaError';
 import { ProKaaMessage } from './types';
+import publishMessage from '../kafka/publishMessage';
 
 type State = {
   isSendMsgLoading: boolean;
@@ -38,13 +27,7 @@ type Props = {
   error?: ProKaaError;
   prokaaKafkaClient?: ProkaaKafkaClient;
   kafkaHost: string;
-  isProtoEnabled: boolean;
-  consumerState: ProKaaKafkaClientState;
-  protos: ProtoFile[];
   kafkaTopic: string;
-  onKafkaTopicChange: (topic: string) => void;
-  onKafkaHostChange: (kafkaHost: string) => void;
-  toggleIsConsumerConnecting: (consumerState: ProKaaKafkaClientState) => void;
   updateMessage: (message: ProKaaMessage) => void;
 };
 
@@ -60,13 +43,6 @@ class RightPanelBody extends PureComponent<Props, State> {
     };
   }
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      message: props.message
-    };
-  }
-
   handleMessageChange = (event: { target: { value: string } }) => {
     const { updateMessage } = this.props;
     updateMessage({ value: event.target.value });
@@ -79,8 +55,7 @@ class RightPanelBody extends PureComponent<Props, State> {
   };
 
   sendMessage = async () => {
-    const { message } = this.state;
-    const { prokaaKafkaClient } = this.props;
+    const { message, prokaaKafkaClient } = this.props;
     if (!prokaaKafkaClient) {
       this.onError(new ProKaaError('please connect to the kafka'));
       return;
@@ -113,32 +88,29 @@ class RightPanelBody extends PureComponent<Props, State> {
   };
 
   render() {
-    const { message, isSendMsgLoading } = this.state;
-    const { isProtoEnabled, prokaaKafkaClient, error } = this.props;
+    const { isSendMsgLoading, error } = this.state;
+    const { message, prokaaKafkaClient } = this.props;
 
     return (
       <div className={styles.rightPanel}>
         <div className={styles.body}>
           <div className={styles.messageContainer}>
-            {!isProtoEnabled ? (
+            {typeof message.value === 'string' && (
               <textarea
                 className={styles.messageInput}
                 placeholder="start typing here 😃"
-                value={
-                  // just to make type happy
-                  typeof message.value === 'string' ? message.value : ''
-                }
+                value={message.value}
                 onChange={this.handleMessageChange}
               />
-            ) : (
+            )}
+            {typeof message.value === 'object' && (
               <ReactJson
                 theme="summerfruit:inverted"
                 name={false}
                 displayDataTypes={false}
                 displayObjectSize={false}
                 enableClipboard={false}
-                // just to make type happy
-                src={typeof message.value === 'object' ? message.value : {}}
+                src={message.value}
                 onEdit={this.onMessageEdit}
                 onAdd={this.onMessageEdit}
                 onDelete={this.onMessageEdit}
@@ -185,20 +157,14 @@ export default connect(
   (state: GlobalState) => {
     return {
       message: state.appCache.message,
-      error: state.appCache.error,
       kafkaHost: state.appConfig.kafkaHost,
-      isProtoEnabled: state.appConfig.protoEnabled,
       protos: state.appCache.protos,
-      kafkaTopic: state.appConfig.kafkaTopic,
-      consumerState: state.appCache.consumerState
+      kafkaTopic: state.appConfig.kafkaTopic
     };
   },
   (dispatch: Dispatch) => {
     return bindActionCreators(
       {
-        onKafkaTopicChange: updateKafkaTopicAction,
-        onKafkaHostChange: updateKafkaHostAction,
-        toggleIsConsumerConnecting: toggleIsConsumerConnectingAction,
         updateMessage: updateMessageAction
       },
       dispatch
