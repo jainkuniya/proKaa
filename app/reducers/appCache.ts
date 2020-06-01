@@ -49,7 +49,7 @@ export default (
       };
     }
     case CLEAN_APP_CACHE: {
-      return { protos: [] };
+      return { protos: [], message: { value: '' } };
     }
     case TOGGLE_IS_CONSUMER_CONNECTING: {
       return { ...state, consumerState: action.consumerState };
