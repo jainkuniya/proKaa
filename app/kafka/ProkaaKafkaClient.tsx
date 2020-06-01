@@ -61,8 +61,8 @@ export default class ProkaaKafkaClient {
     this.admin = this.kafka.admin();
   }
 
-  addConsumer = (onMessage: (msg: ProKaaKafkaMessage) => void) => {
-    this.onMessage.push(onMessage);
+  addConsumer = (onMessages: (msg: ProKaaKafkaMessage) => void) => {
+    this.onMessage.push(onMessages);
   };
 
   sendMessage = async (
@@ -104,8 +104,8 @@ export default class ProkaaKafkaClient {
     }
   };
 
-  handleMessage = (msg: ProKaaKafkaMessage) => {
-    this.onMessage.forEach(callback => callback(msg));
+  handleMessage = (messages: ProKaaKafkaMessage) => {
+    this.onMessage.forEach(callback => callback(messages));
   };
 
   connectConsumer = async (topic: string, fromBeginning = false) => {
@@ -158,6 +158,14 @@ export default class ProkaaKafkaClient {
         this.handleMessage({ message, partition, topic });
       }
     });
+  };
+
+  pauseConsumer = (topic: string) => {
+    this.consumer?.pause([{ topic }]);
+  };
+
+  resumeConsumer = (topic: string) => {
+    this.consumer?.resume([{ topic }]);
   };
 
   disconnectConsumer = async () => {

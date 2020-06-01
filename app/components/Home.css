@@ -136,12 +136,18 @@ button:focus {
 }
 
 .panelHeading {
-  position: sticky;
-  top: 0;
   color: white;
   background-color: #263238;
   font-size: 20px;
   padding: 8px;
+}
+
+.panelHeader {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  flex-direction: column;
+  display: flex;
 }
 
 .messagesWrapper {
