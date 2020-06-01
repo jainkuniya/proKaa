@@ -148,6 +148,7 @@ button:focus {
   background-color: white;
   flex-direction: column;
   display: flex;
+  z-index: 1000;
 }
 
 .messagesWrapper {
