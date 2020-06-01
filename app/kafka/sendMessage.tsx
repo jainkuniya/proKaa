@@ -29,7 +29,7 @@ const sendMessage = async (
     }
     const root: Root = await Protobuf.load(message.protoPath);
     const protoMessage = root.lookupType(
-      `${message.packageName}.${message.protoPath}`
+      `${message.packageName}.${message.name}`
     );
     const errMsg = protoMessage.verify(message.value);
     if (errMsg) {
