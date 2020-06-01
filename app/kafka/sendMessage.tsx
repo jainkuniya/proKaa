@@ -36,7 +36,7 @@ const sendMessage = async (
       onError(new ProKaaError(errMsg));
       return;
     }
-    const msg = protoMessage.create(message);
+    const msg = protoMessage.create(message.value);
     value = Buffer.from(protoMessage.encode(msg).finish());
   }
 
