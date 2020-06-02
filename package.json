@@ -1,7 +1,7 @@
 {
   "name": "prokaa",
   "productName": "ProKaa",
-  "version": "0.5.6",
+  "version": "0.6.7",
   "description": "Application to publish proto messages to kafka",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
