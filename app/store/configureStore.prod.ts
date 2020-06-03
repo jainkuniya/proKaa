@@ -14,7 +14,7 @@ const enhancer = applyMiddleware(thunk);
 
 function configureStore(initialState?: GlobalState): Store {
   const persistConfig = {
-    key: 'root',
+    key: 'prokaa-0.6.7',
     storage: createElectronStorage()
   };
 
